@@ -6,9 +6,12 @@ from flask import Flask, request
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from .codes import CodeStore
 from .config import Config
 from .db import init_db
 from .errors import ApiError, ErrorCode, error_response
+from .limiter import limiter
+from .lockout import IpLockout
 
 
 def create_app(config: Config | None = None) -> Flask:
@@ -21,6 +24,12 @@ def create_app(config: Config | None = None) -> Flask:
         MAX_CONTENT_LENGTH=cfg.max_upload_mb * 1024 * 1024,
     )
     app.json.sort_keys = False
+
+    limiter.init_app(app)
+    app.extensions["code_store"] = CodeStore(
+        cfg.database_path, cfg.max_failed_attempts, cfg.code_expiry_minutes
+    )
+    app.extensions["ip_lockout"] = IpLockout(cfg.database_path)
 
     # Trust exactly N proxies in front of us so rate limits key on the real
     # client IP. PROXY_TRUSTED_COUNT must match the deployment topology
