@@ -108,8 +108,9 @@ export function passwordStrength(value: string): Strength {
 
 /** Magic-byte sniffing for instant client feedback (server re-checks). */
 export async function sniffImage(file: File): Promise<boolean> {
-  const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
-  const startsWith = (...bytes: number[]) => bytes.every((b, i) => head[i] === b);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const head = bytes.slice(0, 12);
+  const startsWith = (...prefix: number[]) => prefix.every((b, i) => head[i] === b);
   if (startsWith(0xff, 0xd8, 0xff)) return true; // JPEG
   if (startsWith(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return true; // PNG
   const ascii = String.fromCharCode(...head.slice(0, 6));

@@ -69,12 +69,12 @@ export default function Field({
           onChange={(event) => onChange(event.target.value)}
         />
         {state === "valid" && (
-          <span className="field-status" aria-label={t("a11y.validField")}>
+          <span className="field-status" data-testid="status-valid" aria-label={t("a11y.validField")}>
             <Check strokeWidth={3.5} aria-hidden />
           </span>
         )}
         {state === "invalid" && (
-          <span className="field-status" aria-label={t("a11y.invalidField")}>
+          <span className="field-status" data-testid="status-invalid" aria-label={t("a11y.invalidField")}>
             <X strokeWidth={3.5} aria-hidden />
           </span>
         )}
