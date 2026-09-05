@@ -30,12 +30,25 @@ class FakeUser:
         self.username = username
 
 
+class FakeCallbackQuery:
+    def __init__(self, callback_data):
+        self.data = callback_data
+        self.message = FakeMessage()
+        self.answered = False
+
+    async def answer(self):
+        self.answered = True
+
+    async def edit_message_text(self, text, **kwargs):
+        self.message.replies.append((text, kwargs))
+
+
 class FakeUpdate:
     def __init__(self, user_id=1, text="/start", callback_data=None):
         self.effective_user = FakeUser(user_id)
         self.callback_query = None
         if callback_data is not None:
-            self.callback_query = SimpleNamespace(data=callback_data, message=FakeMessage())
+            self.callback_query = FakeCallbackQuery(callback_data)
             self.effective_message = self.callback_query.message
         else:
             self.effective_message = FakeMessage()
