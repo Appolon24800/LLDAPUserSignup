@@ -1,0 +1,90 @@
+"""Config loading and validation."""
+
+from __future__ import annotations
+
+import pytest
+
+from app.config import Config, ConfigError
+from tests.conftest import SECRET
+
+ENV = {
+    "BASE_URL": "https://signup.example.com",
+    "LDAP_URL": "ldaps://lldap.example.com:6360",
+    "LDAP_ADMIN_DN": "uid=admin,ou=people,dc=example,dc=com",
+    "LDAP_ADMIN_PASSWORD": "pw",
+    "LDAP_BASE_DN": "dc=example,dc=com",
+    "DATABASE_PATH": "/var/lib/app/x.db",
+    "INTERNAL_API_KEY": SECRET,
+    "FLASK_SECRET_KEY": SECRET,
+}
+
+
+def test_from_env_minimal():
+    cfg = Config.from_env(ENV)
+    assert cfg.base_url == "https://signup.example.com"
+    assert cfg.code_expiry_minutes == 60
+    assert cfg.max_failed_attempts == 5
+    assert cfg.rate_limit_validate == "20 per minute"
+    assert cfg.rate_limit_submit == "5 per minute"
+    assert cfg.max_upload_mb == 2
+    assert cfg.cors_allowed_origins == ()
+    assert cfg.ldap_allow_insecure is False
+
+
+def test_from_env_all_values():
+    cfg = Config.from_env(
+        ENV
+        | {
+            "CODE_EXPIRY_MINUTES": "30",
+            "MAX_FAILED_ATTEMPTS": "3",
+            "RATE_LIMIT_VALIDATE": "10 per hour",
+            "RATE_LIMIT_SUBMIT": "100 per second",
+            "MAX_UPLOAD_MB": "5",
+            "CORS_ALLOWED_ORIGINS": "https://a.example, https://b.example",
+            "LDAP_ALLOW_INSECURE": "TRUE",
+            "PROXY_TRUSTED_COUNT": "2",
+            "BASE_URL": "https://signup.example.com/",
+        }
+    )
+    assert cfg.code_expiry_minutes == 30
+    assert cfg.max_failed_attempts == 3
+    assert cfg.rate_limit_validate == "10 per hour"
+    assert cfg.cors_allowed_origins == ("https://a.example", "https://b.example")
+    assert cfg.ldap_allow_insecure is True
+    assert cfg.proxy_trusted_count == 2
+    assert cfg.base_url == "https://signup.example.com"  # trailing slash stripped
+
+
+@pytest.mark.parametrize(
+    ("overrides", "fragment"),
+    [
+        ({"BASE_URL": ""}, "BASE_URL"),
+        ({"BASE_URL": "signup.example.com"}, "BASE_URL"),
+        ({"BASE_URL": "ftp://x"}, "BASE_URL"),
+        ({"LDAP_URL": "http://lldap:6360"}, "LDAP_URL"),
+        ({"LDAP_URL": "ldaps://"}, "LDAP_URL"),
+        ({"LDAP_ADMIN_DN": ""}, "LDAP_ADMIN_DN"),
+        ({"DATABASE_PATH": " "}, "DATABASE_PATH"),
+        ({"INTERNAL_API_KEY": "short"}, "INTERNAL_API_KEY"),
+        ({"FLASK_SECRET_KEY": ""}, "FLASK_SECRET_KEY"),
+        ({"CODE_EXPIRY_MINUTES": "zero"}, "CODE_EXPIRY_MINUTES"),
+        ({"CODE_EXPIRY_MINUTES": "1000000"}, "CODE_EXPIRY_MINUTES"),
+        ({"RATE_LIMIT_VALIDATE": "lots"}, "RATE_LIMIT_VALIDATE"),
+        ({"RATE_LIMIT_SUBMIT": "20"}, "RATE_LIMIT_SUBMIT"),
+        ({"MAX_UPLOAD_MB": "0"}, "MAX_UPLOAD_MB"),
+        ({"PROXY_TRUSTED_COUNT": "-1"}, "PROXY_TRUSTED_COUNT"),
+    ],
+)
+def test_from_env_rejects_bad_values(overrides, fragment):
+    with pytest.raises(ConfigError, match=fragment):
+        Config.from_env(ENV | overrides)
+
+
+def test_from_env_rejects_wildcard_cors():
+    with pytest.raises(ConfigError, match=r"\*"):
+        Config.from_env(ENV | {"CORS_ALLOWED_ORIGINS": "*"})
+
+
+def test_from_env_rejects_malformed_cors_origin():
+    with pytest.raises(ConfigError, match="invalid origin"):
+        Config.from_env(ENV | {"CORS_ALLOWED_ORIGINS": "https://a.example/path"})

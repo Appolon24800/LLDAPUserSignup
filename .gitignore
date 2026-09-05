@@ -26,6 +26,9 @@ frontend/dist/
 *.sqlite3
 data/
 
+# Local-only dev helpers
+local/
+
 # Editors / OS
 .idea/
 .vscode/
