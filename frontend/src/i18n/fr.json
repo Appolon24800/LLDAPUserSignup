@@ -1,0 +1,102 @@
+{
+  "app": {
+    "title": "Créez votre compte",
+    "subtitle": "Quelques étapes et c'est terminé"
+  },
+  "language": {
+    "label": "Langue",
+    "en": "English",
+    "fr": "Français"
+  },
+  "steps": {
+    "code": "Invitation",
+    "identity": "Vos informations",
+    "password": "Mot de passe",
+    "photo": "Photo",
+    "progress": "Étape {{current}} sur {{total}}"
+  },
+  "fields": {
+    "username": {
+      "label": "Nom d'utilisateur",
+      "placeholder": "ex. jean.dupont",
+      "hint": "Lettres minuscules, chiffres, points, tirets — 3 à 32 caractères."
+    },
+    "firstName": { "label": "Prénom", "placeholder": "Jean" },
+    "lastName": { "label": "Nom", "placeholder": "Dupont" },
+    "displayName": { "label": "Nom affiché", "placeholder": "Jean Dupont", "hint": "Le nom tel qu'il apparaîtra aux autres." },
+    "email": { "label": "Adresse e-mail", "placeholder": "jean.dupont@example.com" },
+    "password": {
+      "label": "Mot de passe",
+      "placeholder": "Au moins 12 caractères",
+      "hint": "Utilisez une longue phrase facile à retenir — la longueur compte plus que la complexité."
+    },
+    "confirm": { "label": "Confirmer le mot de passe", "placeholder": "Saisissez-le à nouveau" },
+    "photo": { "label": "Photo de profil (facultatif)", "hint": "JPEG, PNG, GIF ou WebP — 2 Mo maximum." }
+  },
+  "feedback": {
+    "required": "Ce champ est obligatoire.",
+    "invalid_format": "Ce n'est pas au bon format.",
+    "invalid_length": "Longueur incorrecte.",
+    "reserved": "Ce nom d'utilisateur est réservé.",
+    "taken": "Ce nom d'utilisateur est déjà pris.",
+    "too_short": "Trop court.",
+    "too_weak": "Trop prévisible — allongez-le ou variez les caractères.",
+    "too_common": "Ce mot de passe est trop courant.",
+    "mismatch": "Les mots de passe ne correspondent pas.",
+    "username_format": "Minuscules, chiffres, points, tirets bas ou traits d'union (3–32).",
+    "email_format": "Saisissez une adresse e-mail valide.",
+    "photo_unsupported": "Format d'image non pris en charge.",
+    "photo_too_large": "Image trop volumineuse (max {{max}} Mo)."
+  },
+  "strength": {
+    "label": "Robustesse",
+    "weak": "Faible",
+    "fair": "Moyen",
+    "strong": "Solide"
+  },
+  "buttons": {
+    "next": "Continuer",
+    "back": "Retour",
+    "submit": "Créer mon compte",
+    "skip": "Passer cette étape",
+    "retry": "Réessayer",
+    "changePhoto": "Choisir une autre photo",
+    "addPhoto": "Ajouter une photo",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe"
+  },
+  "code": {
+    "checking": "Vérification de votre invitation…",
+    "validUntil": "Invitation valable"
+  },
+  "errors": {
+    "invalid_code": "Ce code d'invitation est inconnu.",
+    "code_expired": "Cette invitation a expiré. Demandez-en une nouvelle.",
+    "code_used": "Cette invitation a déjà été utilisée.",
+    "code_revoked": "Cette invitation a été annulée.",
+    "code_locked": "Cette invitation est verrouillée après trop de tentatives.",
+    "ip_locked": "Trop de tentatives. Patientez un instant puis réessayez.",
+    "missing_code": "Aucun code d'invitation dans le lien. Ouvrez le lien qui vous a été transmis.",
+    "username_taken": "Ce nom d'utilisateur est déjà pris.",
+    "validation_error": "Vérifiez les champs signalés.",
+    "payload_too_large": "Le fichier est trop volumineux.",
+    "unsupported_image": "Image non prise en charge.",
+    "rate_limited": "Trop de requêtes. Patientez un instant.",
+    "ldap_error": "Le service est momentanément indisponible. Réessayez dans un instant.",
+    "network_error": "Impossible de joindre le serveur. Vérifiez votre connexion.",
+    "internal_error": "Une erreur est survenue. Réessayez.",
+    "unknown": "Une erreur est survenue. Réessayez."
+  },
+  "success": {
+    "title": "Compte créé",
+    "body": "Bienvenue {{username}} ! Votre compte est prêt."
+  },
+  "failure": {
+    "title": "Impossible de créer le compte"
+  },
+  "a11y": {
+    "validField": "Valide",
+    "invalidField": "Invalide",
+    "step": "Étape"
+  }
+}

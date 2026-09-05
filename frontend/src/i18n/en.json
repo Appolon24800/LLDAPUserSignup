@@ -1,0 +1,102 @@
+{
+  "app": {
+    "title": "Create your account",
+    "subtitle": "A few steps and you're done"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "fr": "Français"
+  },
+  "steps": {
+    "code": "Invitation",
+    "identity": "Your details",
+    "password": "Password",
+    "photo": "Photo",
+    "progress": "Step {{current}} of {{total}}"
+  },
+  "fields": {
+    "username": {
+      "label": "Username",
+      "placeholder": "e.g. jean.dupont",
+      "hint": "Lowercase letters, numbers, dots, hyphens — 3 to 32 characters."
+    },
+    "firstName": { "label": "First name", "placeholder": "Jean" },
+    "lastName": { "label": "Last name", "placeholder": "Dupont" },
+    "displayName": { "label": "Display name", "placeholder": "Jean Dupont", "hint": "How your name appears to others." },
+    "email": { "label": "Email", "placeholder": "jean.dupont@example.com" },
+    "password": {
+      "label": "Password",
+      "placeholder": "At least 12 characters",
+      "hint": "Use a long phrase you can remember — length beats complexity."
+    },
+    "confirm": { "label": "Confirm password", "placeholder": "Type it again" },
+    "photo": { "label": "Profile photo (optional)", "hint": "JPEG, PNG, GIF or WebP — max 2 MB." }
+  },
+  "feedback": {
+    "required": "This field is required.",
+    "invalid_format": "This doesn't look right.",
+    "invalid_length": "Wrong length.",
+    "reserved": "This username is reserved.",
+    "taken": "This username is already taken.",
+    "too_short": "Too short.",
+    "too_weak": "Too predictable — make it longer or more varied.",
+    "too_common": "This password is too common.",
+    "mismatch": "Passwords don't match.",
+    "username_format": "Use lowercase letters, numbers, dots, underscores or hyphens (3–32).",
+    "email_format": "Enter a valid email address.",
+    "photo_unsupported": "Unsupported image format.",
+    "photo_too_large": "Image too large (max {{max}} MB)."
+  },
+  "strength": {
+    "label": "Strength",
+    "weak": "Weak",
+    "fair": "Fair",
+    "strong": "Strong"
+  },
+  "buttons": {
+    "next": "Continue",
+    "back": "Back",
+    "submit": "Create my account",
+    "skip": "Skip this step",
+    "retry": "Try again",
+    "changePhoto": "Choose another photo",
+    "addPhoto": "Add a photo",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  },
+  "code": {
+    "checking": "Checking your invitation…",
+    "validUntil": "Invitation valid"
+  },
+  "errors": {
+    "invalid_code": "This invitation code is unknown.",
+    "code_expired": "This invitation has expired. Ask for a new one.",
+    "code_used": "This invitation has already been used.",
+    "code_revoked": "This invitation was cancelled.",
+    "code_locked": "This invitation is locked after too many attempts.",
+    "ip_locked": "Too many attempts. Please wait a moment and try again.",
+    "missing_code": "No invitation code found in the link. Open the link you were given.",
+    "username_taken": "This username is already taken.",
+    "validation_error": "Please check the highlighted fields.",
+    "payload_too_large": "The upload is too large.",
+    "unsupported_image": "Unsupported image.",
+    "rate_limited": "Too many requests. Please wait a moment.",
+    "ldap_error": "The service is temporarily unavailable. Try again shortly.",
+    "network_error": "Cannot reach the server. Check your connection.",
+    "internal_error": "Something went wrong. Try again.",
+    "unknown": "Something went wrong. Try again."
+  },
+  "success": {
+    "title": "Account created",
+    "body": "Welcome, {{username}}! Your account is ready."
+  },
+  "failure": {
+    "title": "Could not create the account"
+  },
+  "a11y": {
+    "validField": "Valid",
+    "invalidField": "Invalid",
+    "step": "Step"
+  }
+}

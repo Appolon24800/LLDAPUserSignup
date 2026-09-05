@@ -1,0 +1,468 @@
+/* ---------------------------------------------------------------------------
+ * Design system: strict black & white, high contrast, large touch targets.
+ * One fluid layout from 320px phones to 4K desktops.
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --ink: #000;
+  --paper: #fff;
+  --muted: rgba(0, 0, 0, 0.55);
+  --faint: rgba(0, 0, 0, 0.12);
+  --line: rgba(0, 0, 0, 0.28);
+  --danger: #000; /* strict monochrome: errors are shape + weight, not color */
+  --ok-icon: #000;
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-5: 3rem;
+
+  --radius: 14px;
+  --target: 3.5rem; /* 56px minimum touch target */
+  --speed: 180ms;
+
+  --fs-base: clamp(1rem, 0.95rem + 0.4vw, 1.15rem);
+  --fs-title: clamp(1.7rem, 1.3rem + 2vw, 2.4rem);
+  --fs-icon: clamp(1.4rem, 1.2rem + 1vw, 1.9rem);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- layout ---------------------------------------------------------------- */
+
+.shell {
+  width: min(30rem, 100%);
+  margin-inline: auto;
+  padding: clamp(1rem, 3vw, 2.5rem);
+  padding-top: clamp(1.5rem, 5vw, 4rem);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-3);
+}
+
+.header {
+  margin-bottom: var(--space-4);
+}
+
+.header h1 {
+  font-size: var(--fs-title);
+  line-height: 1.15;
+  margin: 0 0 var(--space-1);
+  letter-spacing: -0.02em;
+}
+
+.header .subtitle {
+  color: var(--muted);
+  margin: 0;
+}
+
+/* --- progress --------------------------------------------------------------- */
+
+.progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.progress-dot {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: transparent;
+  transition: background var(--speed) ease, transform var(--speed) ease;
+}
+
+.progress-dot.done {
+  background: var(--ink);
+}
+
+.progress-dot.current {
+  background: var(--ink);
+  transform: scale(1.35);
+}
+
+.progress-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* --- fields ------------------------------------------------------------------ */
+
+.field {
+  margin-bottom: var(--space-3);
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.field-label svg {
+  width: 1.35em;
+  height: 1.35em;
+}
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  min-height: var(--target);
+  padding: var(--space-1) 3rem var(--space-1) var(--space-2);
+  font: inherit;
+  color: var(--ink);
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  outline: none;
+  transition: box-shadow var(--speed) ease;
+}
+
+.input:focus {
+  box-shadow: 0 0 0 4px var(--faint);
+}
+
+.field-status {
+  position: absolute;
+  right: var(--space-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.field-status svg {
+  width: 1.6rem;
+  height: 1.6rem;
+  animation: pop var(--speed) ease;
+}
+
+/* Errors: thick left border + bold message (monochrome cues). */
+.field.invalid .input {
+  border-width: 3px;
+}
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+  margin-top: var(--space-1);
+  min-height: 1.4rem;
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 0.9em;
+  margin-top: var(--space-1);
+}
+
+/* --- password strength --------------------------------------------------------- */
+
+.strength {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.strength-bar {
+  flex: 1;
+  height: 0.7rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  background: var(--ink);
+  width: 0;
+  transition: width 300ms ease;
+}
+
+.strength[data-strength="weak"] .strength-fill {
+  width: 25%;
+}
+
+.strength[data-strength="fair"] .strength-fill {
+  width: 60%;
+}
+
+.strength[data-strength="strong"] .strength-fill {
+  width: 100%;
+}
+
+/* --- buttons ------------------------------------------------------------------ */
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--target);
+  padding: var(--space-1) var(--space-3);
+  font: inherit;
+  font-weight: 700;
+  border-radius: var(--radius);
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform var(--speed) ease, background var(--speed) ease, color var(--speed) ease;
+}
+
+.btn svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn.primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btn.primary:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.btn.ghost:hover:not(:disabled) {
+  background: var(--faint);
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn:focus-visible {
+  outline: 4px solid var(--faint);
+  outline-offset: 2px;
+}
+
+/* --- language switcher ----------------------------------------------------------- */
+
+.lang-switch {
+  display: inline-flex;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.lang-switch button {
+  min-height: 2.75rem;
+  min-width: 3.5rem;
+  padding: 0 var(--space-2);
+  font: inherit;
+  font-weight: 700;
+  border: none;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.lang-switch button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* --- status screens ---------------------------------------------------------------- */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-2);
+  animation: rise 240ms ease;
+}
+
+.screen-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 6rem;
+  height: 6rem;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+}
+
+.screen-icon svg {
+  width: 3.2rem;
+  height: 3.2rem;
+}
+
+.screen-icon.ok {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.screen-icon.err {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.screen h2 {
+  font-size: var(--fs-title);
+  margin: 0;
+}
+
+.screen p {
+  margin: 0;
+  max-width: 26rem;
+}
+
+.spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 4px solid var(--faint);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+/* --- photo step --------------------------------------------------------------------- */
+
+.photo-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 3px dashed var(--ink);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background var(--speed) ease;
+}
+
+.photo-drop:hover,
+.photo-drop.dragover {
+  background: var(--faint);
+}
+
+.photo-drop svg {
+  width: 3rem;
+  height: 3rem;
+}
+
+.photo-preview {
+  width: 10rem;
+  height: 10rem;
+  object-fit: cover;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+}
+
+/* --- misc --------------------------------------------------------------------------- */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.fade-in {
+  animation: rise 240ms ease;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(0.75rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Respect user motion preferences: everything becomes instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
