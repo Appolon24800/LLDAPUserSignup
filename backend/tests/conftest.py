@@ -13,13 +13,18 @@ SECRET = "x" * 40  # meets the minimum length check; test-only
 class FakeLdap:
     """In-memory LdapService double recording every call."""
 
-    def __init__(self, existing_users=(), fail_create=False, fail_groups=False):
+    def __init__(self, existing_users=(), available_groups=("family",), fail_create=False,
+                 fail_groups=False):
         self.existing_users = set(existing_users)
+        self.available_groups = list(available_groups)
         self.fail_create = fail_create
         self.fail_groups = fail_groups
         self.created: list[dict] = []
         self.deleted: list[str] = []
         self.group_adds: list[tuple[str, list[str]]] = []
+
+    def list_groups(self):
+        return sorted(self.available_groups)
 
     def user_exists(self, username):
         return username in self.existing_users

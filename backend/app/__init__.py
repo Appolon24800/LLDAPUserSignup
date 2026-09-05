@@ -57,10 +57,12 @@ def create_app(config: Config | None = None) -> Flask:
     init_db(cfg.database_path)
 
     from .api.health import blp as health_blp
+    from .api.internal import blp as internal_blp
     from .api.public import blp as public_blp
 
     app.register_blueprint(health_blp)
     app.register_blueprint(public_blp)
+    app.register_blueprint(internal_blp)
 
     _register_error_handlers(app)
     return app
