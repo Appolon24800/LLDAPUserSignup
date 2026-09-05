@@ -41,12 +41,14 @@ class ApiError(Exception):
         message: str,
         status: int = 400,
         field_errors: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
         self.status = status
         self.field_errors = field_errors
+        self.headers = headers
 
 
 def error_response(
@@ -54,8 +56,11 @@ def error_response(
     message: str,
     status: int = 400,
     field_errors: dict[str, str] | None = None,
-) -> tuple[Any, int]:
+    headers: dict[str, str] | None = None,
+) -> tuple[Any, int] | tuple[Any, int, dict[str, str]]:
     body: dict[str, Any] = {"error": {"code": code, "message": message}}
     if field_errors:
         body["error"]["field_errors"] = field_errors
+    if headers:
+        return jsonify(body), status, headers
     return jsonify(body), status

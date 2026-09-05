@@ -160,6 +160,14 @@ class LdapService:
                 raise UserAlreadyExistsError(username) from err
             raise LdapServiceError(f"user creation failed: {err}") from err
 
+    def delete_user(self, username: str) -> None:
+        """Remove a user entry (rollback path; best effort)."""
+        try:
+            with self._connection_factory() as conn:
+                conn.delete(self.user_dn(username))
+        except LDAPException as err:
+            raise LdapServiceError(f"user deletion failed: {err}") from err
+
     def add_to_groups(self, username: str, groups: list[str] | tuple[str, ...]) -> None:
         user_dn = self.user_dn(username)
         try:

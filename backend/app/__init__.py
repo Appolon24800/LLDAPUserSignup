@@ -10,6 +10,7 @@ from .codes import CodeStore
 from .config import Config
 from .db import init_db
 from .errors import ApiError, ErrorCode, error_response
+from .ldap_service import LdapService
 from .limiter import limiter
 from .lockout import IpLockout
 
@@ -30,6 +31,18 @@ def create_app(config: Config | None = None) -> Flask:
         cfg.database_path, cfg.max_failed_attempts, cfg.code_expiry_minutes
     )
     app.extensions["ip_lockout"] = IpLockout(cfg.database_path)
+    app.extensions["ldap_service"] = LdapService(
+        url=cfg.ldap_url,
+        admin_dn=cfg.ldap_admin_dn,
+        admin_password=cfg.ldap_admin_password,
+        base_dn=cfg.ldap_base_dn,
+        allow_insecure=cfg.ldap_allow_insecure,
+    )
+
+    if cfg.cors_allowed_origins:
+        from flask_cors import CORS
+
+        CORS(app, resources={r"/api/v1/*": {"origins": list(cfg.cors_allowed_origins)}})
 
     # Trust exactly N proxies in front of us so rate limits key on the real
     # client IP. PROXY_TRUSTED_COUNT must match the deployment topology
@@ -44,8 +57,10 @@ def create_app(config: Config | None = None) -> Flask:
     init_db(cfg.database_path)
 
     from .api.health import blp as health_blp
+    from .api.public import blp as public_blp
 
     app.register_blueprint(health_blp)
+    app.register_blueprint(public_blp)
 
     _register_error_handlers(app)
     return app
@@ -54,7 +69,7 @@ def create_app(config: Config | None = None) -> Flask:
 def _register_error_handlers(app: Flask) -> None:
     @app.errorhandler(ApiError)
     def handle_api_error(err: ApiError):
-        return error_response(err.code, err.message, err.status, err.field_errors)
+        return error_response(err.code, err.message, err.status, err.field_errors, err.headers)
 
     @app.errorhandler(HTTPException)
     def handle_http_exception(err: HTTPException):
@@ -75,7 +90,11 @@ def _register_error_handlers(app: Flask) -> None:
         status = err.code or 500
         # Never leak internal detail for server errors.
         message = err.description if status < 500 else "Internal server error"
-        return error_response(code, message, status)
+        headers = {}
+        if status == 429:
+            retry_after = getattr(err, "retry_after", None)
+            headers["Retry-After"] = str(retry_after) if retry_after else "60"
+        return error_response(code, message, status, headers=headers or None)
 
     @app.errorhandler(Exception)
     def handle_unexpected(err: Exception):
