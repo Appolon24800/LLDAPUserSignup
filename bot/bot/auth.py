@@ -14,7 +14,8 @@ from collections.abc import Callable
 NOT_AUTHORIZED_MESSAGE = "⛔ Not authorized."
 SLOW_DOWN_MESSAGE = "⏳ Too many commands. Please wait a moment."
 
-MAX_CALLS = 10
+# Generous for humans (picker browsing counts), still bounds flooding.
+MAX_CALLS = 30
 WINDOW_SECONDS = 60.0
 
 

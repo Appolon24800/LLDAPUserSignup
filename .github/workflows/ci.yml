@@ -74,7 +74,7 @@ jobs:
         working-directory: backend
     services:
       lldap:
-        image: lldap/lldap:0.6
+        image: lldap/lldap:stable
         env:
           LLDAP_LDAP_USER: admin
           LLDAP_LDAP_USER_PASS: integration-test-password
