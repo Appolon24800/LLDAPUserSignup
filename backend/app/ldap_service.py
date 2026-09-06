@@ -191,8 +191,9 @@ class LdapService:
             "givenName": first_name,
             "mail": email,
         }
-        if photo_jpeg is not None:
-            attributes["jpegPhoto"] = photo_jpeg
+        # No jpegPhoto here: several LLDAP builds validate attributes as
+        # UTF-8 and reject the binary photo; avatars go through the GraphQL
+        # API after creation instead.
         try:
             with self._connection_factory() as conn:
                 if not conn.add(self.user_dn(username), attributes=attributes):
@@ -220,6 +221,13 @@ class LdapService:
             if _is_duplicate_user_error(err):
                 raise UserAlreadyExistsError(username) from err
             raise LdapServiceError(f"user creation failed: {err}") from err
+        if photo_jpeg is not None and self.graphql is not None:
+            try:
+                self.graphql.upload_avatar(username, photo_jpeg)
+            except LdapServiceError:
+                # Cosmetic: the account exists; a failed avatar must not
+                # fail the registration.
+                logger.warning("avatar upload for %s failed", username, exc_info=True)
 
     def delete_user(self, username: str) -> None:
         """Remove a user entry (rollback path; best effort)."""

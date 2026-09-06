@@ -92,10 +92,57 @@ def test_create_user_attributes_present():
         assert entry.sn.value == "Martin"
         assert entry.givenName.value == "Bob"
         assert entry.mail.value == "bob@example.com"
-        # The password is set via the RFC 3062 extended op, never stored
-        # as a plain attribute on the ADD.
+        # Neither the password nor the photo travel as ADD attributes;
+        # both go through dedicated channels (RFC 3062 / GraphQL avatar).
         assert "userPassword" not in (entry.entry_attributes or [])
-        assert entry.jpegPhoto.raw_values[0] == b"\xff\xd8\xff\xe0fakejpeg"
+        assert "jpegPhoto" not in (entry.entry_attributes or [])
+
+
+def test_create_user_uploads_avatar_via_graphql():
+    class FakeGraphql:
+        def __init__(self):
+            self.avatars = []
+            self.groups = []
+
+        def upload_avatar(self, user_id, jpeg):
+            self.avatars.append((user_id, jpeg))
+
+        def add_user_to_group(self, user_id, group):
+            self.groups.append((user_id, group))
+
+    graphql = FakeGraphql()
+    svc = make_service()
+    svc.graphql = graphql
+    svc.create_user(
+        "eve",
+        password="pw",
+        first_name="Eve",
+        last_name="Adams",
+        display_name="Eve Adams",
+        email="eve@example.com",
+        photo_jpeg=b"\xff\xd8jpeg",
+    )
+    assert graphql.avatars == [("eve", b"\xff\xd8jpeg")]
+
+
+def test_create_user_avatar_failure_does_not_block():
+    class FailingAvatar:
+        def upload_avatar(self, user_id, jpeg):
+            from app.ldap_service import LdapServiceError
+
+            raise LdapServiceError("upload rejected")
+
+    svc = make_service()
+    svc.graphql = FailingAvatar()
+    svc.create_user(  # must not raise
+        "frank",
+        password="pw",
+        first_name="Frank",
+        last_name="Orr",
+        display_name="Frank Orr",
+        email="frank@example.com",
+        photo_jpeg=b"\xff\xd8jpeg",
+    )
 
 
 def test_create_duplicate_user_raises():
