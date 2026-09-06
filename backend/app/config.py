@@ -77,10 +77,6 @@ class Config:
     ldap_admin_password: str
     ldap_base_dn: str
     ldap_allow_insecure: bool
-    # Optional path (inside the container) to a CA bundle/PEM used to verify
-    # the LLDAP certificate — e.g. an internal CA or LLDAP's own self-signed
-    # cert. Empty = system trust store (Python also honors SSL_CERT_FILE).
-    ldap_ca_cert: str = ""
     internal_api_key: str
     flask_secret_key: str
     cors_allowed_origins: tuple[str, ...]
@@ -91,6 +87,10 @@ class Config:
     database_path: str
     max_upload_mb: int
     proxy_trusted_count: int
+    # Optional path (inside the container) to a CA bundle/PEM used to verify
+    # the LLDAP certificate — e.g. an internal CA or LLDAP's own self-signed
+    # cert. Empty = system trust store (Python also honors SSL_CERT_FILE).
+    ldap_ca_cert: str = ""
     # Optional: shown to users ("<Platform> account created") and used in
     # Telegram registration notifications. Empty = generic wording.
     platform_name: str = ""
@@ -180,4 +180,5 @@ class Config:
             platform_name=platform_name,
             telegram_bot_token=env.get("TELEGRAM_BOT_TOKEN", "").strip(),
             telegram_admin_ids=notify_ids,
+            ldap_ca_cert=ldap_ca_cert,
         )
