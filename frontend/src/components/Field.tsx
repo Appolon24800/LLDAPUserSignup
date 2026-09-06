@@ -50,7 +50,7 @@ export default function Field({
   const messageKey = specific ?? emailSpecific;
 
   return (
-    <div className={`field ${state === "invalid" ? "invalid" : ""}`}>
+    <div className={`field ${state === "invalid" ? "invalid" : ""} ${trailing ? "has-trailing" : ""}`.trimEnd()}>
       <label className="field-label" htmlFor={id}>
         {icon}
         {label}

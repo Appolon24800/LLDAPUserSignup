@@ -22,10 +22,9 @@ export default function PasswordStep({
   const toggle = (
     <button
       type="button"
-      className="btn ghost"
+      className="btn ghost reveal-toggle"
       aria-label={visible ? t("buttons.hidePassword") : t("buttons.showPassword")}
       onClick={() => setVisible((v) => !v)}
-      style={{ position: "absolute", right: "3.2rem", minHeight: "2.25rem", padding: "0 0.5rem" }}
     >
       {visible ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
     </button>

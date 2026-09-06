@@ -186,6 +186,25 @@ body {
   padding: 0;
 }
 
+/* When an inline action (password reveal) shares the field, the validity
+ * icon moves left of it and the text keeps clear of both. */
+.field.has-trailing .field-status {
+  right: 4.5rem;
+}
+
+.field.has-trailing .input {
+  padding-right: 6.5rem;
+}
+
+/* Extra specificity so the compact sizing wins over the later `.btn` rule. */
+.field .reveal-toggle {
+  position: absolute;
+  right: var(--space-1);
+  min-height: 2.5rem;
+  min-width: 2.5rem;
+  padding: 0 0.5rem;
+}
+
 .field-status svg {
   width: 1.6rem;
   height: 1.6rem;
