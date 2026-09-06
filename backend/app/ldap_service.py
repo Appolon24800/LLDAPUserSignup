@@ -12,6 +12,7 @@ LDAP_ALLOW_INSECURE (development / containerized test instances).
 
 from __future__ import annotations
 
+import base64
 import logging
 import ssl
 from collections.abc import Callable, Iterator
@@ -40,10 +41,10 @@ def _is_duplicate_user_error(err: BaseException) -> bool:
 
 
 def _is_photo_rejected(err: BaseException) -> bool:
-    """LLDAP builds that validate attributes as UTF-8 reject a binary
-    jpegPhoto with constraintViolation/undefinedAttributeType."""
+    """Servers that can't store the photo reject it by name; detect both
+    the avatar attribute and the legacy jpegPhoto spelling."""
     text = str(err).lower()
-    if "jpegphoto" not in text:
+    if "avatar" not in text and "jpegphoto" not in text:
         return False
     return any(
         marker in text
@@ -204,7 +205,11 @@ class LdapService:
             "mail": email,
         }
         if photo_jpeg is not None:
-            attributes["jpegPhoto"] = photo_jpeg
+            # LLDAP 0.6+ reads the avatar from the `avatar` attribute on ADD
+            # and decodes it as UTF-8 text first, then base64-decodes and
+            # validates the JPEG — so raw bytes can never work; the pipeline
+            # already produced a clean JPEG, base64-wrap it.
+            attributes["avatar"] = base64.b64encode(photo_jpeg).decode("ascii")
         try:
             with self._connection_factory() as conn:
                 try:
@@ -220,6 +225,7 @@ class LdapService:
                         "creating the user without it",
                         username,
                     )
+                    attributes.pop("avatar", None)
                     attributes.pop("jpegPhoto", None)
                     self._add_user_entry(conn, username, attributes)
                 # Passwords go through the RFC 3062 Password Modify extended

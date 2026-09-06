@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 from contextlib import contextmanager
 
 import pytest
@@ -93,9 +94,10 @@ def test_create_user_attributes_present():
         assert entry.givenName.value == "Bob"
         assert entry.mail.value == "bob@example.com"
         # The password is set via the RFC 3062 extended op, never stored
-        # as a plain attribute on the ADD.
+        # as a plain attribute on the ADD; the photo travels base64-wrapped
+        # under the `avatar` attribute (LLDAP 0.6+ UTF-8 + base64 contract).
         assert "userPassword" not in (entry.entry_attributes or [])
-        assert entry.jpegPhoto.raw_values[0] == b"\xff\xd8\xff\xe0fakejpeg"
+        assert base64.b64decode(entry.avatar.value) == b"\xff\xd8\xff\xe0fakejpeg"
 
 
 def test_create_user_retries_without_photo_when_rejected():
@@ -108,12 +110,12 @@ def test_create_user_retries_without_photo_when_rejected():
     class RejectedFirstPhotoConn:
         def add(self, dn, attributes=None):
             attempts.append(dict(attributes))
-            if "jpegPhoto" in attributes:
+            if "avatar" in attributes:
                 raise LDAPConstraintViolationResult(
                     result={
                         "result": 19,
                         "description": "constraintViolation",
-                        "message": "Attribute jpegphoto value is invalid UTF-8",
+                        "message": "Attribute avatar value is invalid UTF-8",
                     }
                 )
             return True
@@ -150,8 +152,8 @@ def test_create_user_retries_without_photo_when_rejected():
         photo_jpeg=b"\xff\xd8jpeg",
     )
     assert len(attempts) == 2
-    assert "jpegPhoto" in attempts[0]
-    assert "jpegPhoto" not in attempts[1]
+    assert "avatar" in attempts[0]
+    assert "avatar" not in attempts[1]
 
 
 def test_create_duplicate_user_raises():

@@ -57,21 +57,39 @@ def test_list_groups():
 
 
 def test_user_lifecycle():
+    import io
+
+    from PIL import Image
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (16, 16), (10, 20, 30)).save(buffer, format="JPEG")
+    photo = buffer.getvalue()
+
+    svc = service()
     username = f"it-{uuid.uuid4().hex[:10]}"
-    assert service().user_exists(username) is False
-    service().create_user(
+    assert svc.user_exists(username) is False
+    svc.create_user(
         username,
         password="Phrase-Harbor7-Velvet",
         first_name="Test",
         last_name="User",
         display_name="Test User",
         email=f"{username}@example.com",
-        photo_jpeg=b"\xff\xd8\xff\xe0integration",
+        photo_jpeg=photo,
     )
-    assert service().user_exists(username) is True
+    assert svc.user_exists(username) is True
+
+    # Avatar round-trip: LLDAP stores the base64-wrapped `avatar` attribute
+    # and serves it back over LDAP as raw jpegPhoto bytes.
+    with svc._connection_factory() as conn:
+        assert conn.search(
+            svc.user_dn(username), "(objectClass=*)", attributes=["jpegPhoto"]
+        )
+        stored = conn.entries[0].jpegPhoto.raw_values[0]
+    assert stored[:3] == b"\xff\xd8\xff" and len(stored) > 100
 
     with pytest.raises(UserAlreadyExistsError):
-        service().create_user(
+        svc.create_user(
             username,
             password="x",
             first_name="T",
@@ -80,8 +98,8 @@ def test_user_lifecycle():
             email="t@example.com",
         )
 
-    service().delete_user(username)
-    assert service().user_exists(username) is False
+    svc.delete_user(username)
+    assert svc.user_exists(username) is False
 
 
 def test_group_membership():
