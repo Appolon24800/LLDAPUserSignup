@@ -120,16 +120,16 @@ describe("validatePassword", () => {
 });
 
 describe("suggestUsername", () => {
-  it("derives a dotted username from a full name", () => {
-    expect(suggestUsername("Jean Dupont")).toBe("jean.dupont");
+  it("derives an underscored username from a full name", () => {
+    expect(suggestUsername("Jean Dupont")).toBe("jean_dupont");
   });
 
   it("strips accents", () => {
-    expect(suggestUsername("Éloi Fontaine")).toBe("eloi.fontaine");
+    expect(suggestUsername("Éloi Fontaine")).toBe("eloi_fontaine");
   });
 
   it("collapses separators and trims edges", () => {
-    expect(suggestUsername("  Marie-Claire  O'Brien ")).toBe("marie.claire.o.brien");
+    expect(suggestUsername("  Marie-Claire  O'Brien ")).toBe("marie_claire_o_brien");
   });
 
   it("returns empty for names too short to be valid", () => {

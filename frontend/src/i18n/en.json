@@ -18,7 +18,7 @@
     },
     "username": {
       "label": "Username",
-      "placeholder": "jean.dupont",
+      "placeholder": "jean_dupont",
       "hint": "Filled in from your name — change it if you prefer."
     },
     "email": { "label": "Email", "placeholder": "jean.dupont@example.com" },

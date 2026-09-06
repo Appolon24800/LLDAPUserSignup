@@ -65,7 +65,7 @@ describe("invitation code handling", () => {
 async function fillIdentity() {
   // Full name auto-fills the username suggestion.
   await userEvent.type(await screen.findByLabelText(/full name/i), "Alice Smith");
-  expect(screen.getByLabelText(/^username/i)).toHaveValue("alice.smith");
+  expect(screen.getByLabelText(/^username/i)).toHaveValue("alice_smith");
   await userEvent.type(screen.getByLabelText(/email/i), "alice@example.com");
 }
 
@@ -108,7 +108,7 @@ describe("wizard flow", () => {
     expect(mockedRegister).toHaveBeenCalledTimes(1);
     const [form, photo] = mockedRegister.mock.calls[0];
     expect(form.code).toBe("good");
-    expect(form.username).toBe("alice.smith");
+    expect(form.username).toBe("alice_smith");
     expect(form.fullName).toBe("Alice Smith");
     expect(form.password).toBe("Phrase-Harbor7-Velvet");
     expect(photo).toBeFalsy();
@@ -119,7 +119,7 @@ describe("wizard flow", () => {
     const fullName = await screen.findByLabelText(/full name/i);
     await userEvent.type(fullName, "Éloi Fontaine");
     const username = screen.getByLabelText(/^username/i);
-    expect(username).toHaveValue("eloi.fontaine");
+    expect(username).toHaveValue("eloi_fontaine");
 
     // Manual entry wins and later name edits must not clobber it.
     await userEvent.clear(username);
@@ -130,7 +130,7 @@ describe("wizard flow", () => {
     // Clearing the username hands control back to the suggestion.
     await userEvent.clear(username);
     await userEvent.type(fullName, ".");
-    expect(username).toHaveValue("eloi.fontaine.jr");
+    expect(username).toHaveValue("eloi_fontaine_jr");
   });
 
   it("shows the platform name and display name on success", async () => {
@@ -140,7 +140,7 @@ describe("wizard flow", () => {
       expires_at: "2030-01-01T00:00:00Z",
       platform_name: "Acme",
     });
-    mockedRegister.mockResolvedValue("alice.smith");
+    mockedRegister.mockResolvedValue("alice_smith");
     render(<App />);
     await fillIdentity();
     await userEvent.click(screen.getByRole("button", { name: /continue/i }));

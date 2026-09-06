@@ -104,7 +104,7 @@ export function validateConfirm(password: string, confirm: string): FieldError {
 }
 
 /**
- * Username suggestion from a full name ("Éloi Fontaine" -> "eloi.fontaine").
+ * Username suggestion from a full name ("Éloi Fontaine" -> "eloi_fontaine").
  * Returns "" when the name is too short to produce a valid username.
  */
 export function suggestUsername(fullName: string): string {
@@ -112,8 +112,8 @@ export function suggestUsername(fullName: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "") // strip accents
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ".")
-    .replace(/^\.+|\.+$/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
     .slice(0, 32)
     .replace(/[^a-z0-9]$/, "");
   return base.length >= 3 ? base : "";
