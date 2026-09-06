@@ -8,6 +8,7 @@ lldap/lldap service container; they verify the LDAP schema assumptions
 from __future__ import annotations
 
 import os
+import time
 import uuid
 
 import pytest
@@ -19,8 +20,22 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.fixture()
-def service():
+@pytest.fixture(scope="session", autouse=True)
+def wait_for_lldap():
+    """LLDAP takes a variable time to accept connections; poll until ready."""
+    deadline = time.monotonic() + 120
+    last_error: Exception | None = None
+    while time.monotonic() < deadline:
+        try:
+            service().list_groups()
+            return
+        except Exception as err:  # readiness polling: keep trying
+            last_error = err
+            time.sleep(3)
+    raise RuntimeError(f"LLDAP not ready after 120s: {last_error}")
+
+
+def service() -> LdapService:
     return LdapService(
         url=os.environ["INTEGRATION_LLDAP_URL"],
         admin_dn=os.environ["INTEGRATION_ADMIN_DN"],
@@ -30,15 +45,15 @@ def service():
     )
 
 
-def test_list_groups(service):
-    groups = service.list_groups()
+def test_list_groups():
+    groups = service().list_groups()
     assert groups, "expected at least the default lldap_admin group"
 
 
-def test_user_lifecycle(service):
+def test_user_lifecycle():
     username = f"it-{uuid.uuid4().hex[:10]}"
-    assert service.user_exists(username) is False
-    service.create_user(
+    assert service().user_exists(username) is False
+    service().create_user(
         username,
         password="Phrase-Harbor7-Velvet",
         first_name="Test",
@@ -47,10 +62,10 @@ def test_user_lifecycle(service):
         email=f"{username}@example.com",
         photo_jpeg=b"\xff\xd8\xff\xe0integration",
     )
-    assert service.user_exists(username) is True
+    assert service().user_exists(username) is True
 
     with pytest.raises(UserAlreadyExistsError):
-        service.create_user(
+        service().create_user(
             username,
             password="x",
             first_name="T",
@@ -59,14 +74,14 @@ def test_user_lifecycle(service):
             email="t@example.com",
         )
 
-    service.delete_user(username)
-    assert service.user_exists(username) is False
+    service().delete_user(username)
+    assert service().user_exists(username) is False
 
 
-def test_group_membership(service):
+def test_group_membership():
     username = f"it-{uuid.uuid4().hex[:10]}"
-    group = service.list_groups()[0]
-    service.create_user(
+    group = service().list_groups()[0].name
+    service().create_user(
         username,
         password="Phrase-Harbor7-Velvet",
         first_name="Test",
@@ -74,5 +89,5 @@ def test_group_membership(service):
         display_name="Test Groups",
         email=f"{username}@example.com",
     )
-    service.add_to_groups(username, [group])
-    service.delete_user(username)
+    service().add_to_groups(username, [group])
+    service().delete_user(username)
