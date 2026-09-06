@@ -9,8 +9,9 @@
   --muted: rgba(0, 0, 0, 0.55);
   --faint: rgba(0, 0, 0, 0.12);
   --line: rgba(0, 0, 0, 0.28);
-  --danger: #000; /* strict monochrome: errors are shape + weight, not color */
-  --ok-icon: #000;
+  --primary-hover: rgba(0, 0, 0, 0.85);
+  --danger: var(--ink);
+  --ok-icon: var(--ink);
 
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
@@ -27,6 +28,18 @@
   --fs-base: clamp(1rem, 0.95rem + 0.4vw, 1.15rem);
   --fs-title: clamp(1.7rem, 1.3rem + 2vw, 2.4rem);
   --fs-icon: clamp(1.4rem, 1.2rem + 1vw, 1.9rem);
+}
+
+/* Black theme: follows the OS setting, no manual toggle. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #fff;
+    --paper: #000;
+    --muted: rgba(255, 255, 255, 0.6);
+    --faint: rgba(255, 255, 255, 0.16);
+    --line: rgba(255, 255, 255, 0.35);
+    --primary-hover: rgba(255, 255, 255, 0.85);
+  }
 }
 
 * {
@@ -64,12 +77,6 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-}
-
-.top-bar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: var(--space-3);
 }
 
 .header {
@@ -282,7 +289,7 @@ body {
 }
 
 .btn.primary:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.85);
+  background: var(--primary-hover);
 }
 
 .btn.ghost:hover:not(:disabled) {
@@ -297,32 +304,6 @@ body {
 .btn:focus-visible {
   outline: 4px solid var(--faint);
   outline-offset: 2px;
-}
-
-/* --- language switcher ----------------------------------------------------------- */
-
-.lang-switch {
-  display: inline-flex;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.lang-switch button {
-  min-height: 2.75rem;
-  min-width: 3.5rem;
-  padding: 0 var(--space-2);
-  font: inherit;
-  font-weight: 700;
-  border: none;
-  background: var(--paper);
-  color: var(--ink);
-  cursor: pointer;
-}
-
-.lang-switch button[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--paper);
 }
 
 /* --- status screens ---------------------------------------------------------------- */
