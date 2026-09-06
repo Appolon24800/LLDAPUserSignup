@@ -70,7 +70,13 @@ export function validateEmail(value: string): FieldError {
   return null;
 }
 
-/** Pool-based entropy over unique characters (same formula as the server). */
+/**
+ * Pool-based entropy with a repeat cap (same formula as the server).
+ *
+ * Effective length = actual length capped at 2.5x the unique-character
+ * count: natural words keep their length credit, degenerate repetition
+ * ("aaaa", "abcabc") collapses.
+ */
 export function passwordEntropyBits(value: string): number {
   let pool = 0;
   if (/[a-z]/.test(value)) pool += 26;
@@ -78,7 +84,8 @@ export function passwordEntropyBits(value: string): number {
   if (/\d/.test(value)) pool += 10;
   if (/[^a-zA-Z0-9]/.test(value)) pool += 33;
   if (pool === 0) return 0;
-  return new Set(value).size * Math.log2(pool);
+  const effectiveLength = Math.min(value.length, 2.5 * new Set(value).size);
+  return effectiveLength * Math.log2(pool);
 }
 
 export function validatePassword(value: string): FieldError {

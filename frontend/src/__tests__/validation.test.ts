@@ -77,10 +77,18 @@ describe("validatePassword", () => {
     expect(validatePassword("correct horse battery staple 42")).toBeNull();
   });
 
+  it("accepts natural words and phrases", () => {
+    expect(validatePassword("anticonstitutionnellement")).toBeNull();
+    expect(validatePassword("MonChatDortBienLeSoir")).toBeNull();
+    expect(validatePassword("phrase-cheval-batterie")).toBeNull();
+  });
+
   it.each([
     ["", "required"],
     ["short1!A", "too_short"],
     ["aaaaaaaaaaaa", "too_weak"],
+    ["abcabcabcabc", "too_weak"],
+    ["coucoucoucou1", "too_weak"],
     ["password12345", "too_common"],
     ["PASSWORDPASSWORD", "too_common"],
     ["987654987654", "too_weak"],
@@ -88,9 +96,14 @@ describe("validatePassword", () => {
     expect(validatePassword(value)).toBe(code);
   });
 
-  it("entropy counts unique characters", () => {
-    expect(passwordEntropyBits("a".repeat(12))).toBeLessThan(5);
-    expect(passwordEntropyBits("qwertyuiopasdfghjklz")).toBeGreaterThan(60);
+  it("entropy rewards length but caps degenerate repetition", () => {
+    const repetitive = passwordEntropyBits("a".repeat(12));
+    const pattern = passwordEntropyBits("abcabcabcabc");
+    const natural = passwordEntropyBits("anticonstitutionnellement");
+    expect(repetitive).toBeLessThan(pattern);
+    expect(pattern).toBeLessThan(natural);
+    expect(natural).toBeGreaterThan(60);
+    expect(pattern).toBeLessThan(60);
   });
 
   it("strength levels", () => {

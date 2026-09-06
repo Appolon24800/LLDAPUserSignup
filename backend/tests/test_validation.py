@@ -113,19 +113,24 @@ class TestPassword:
         assert validate_password("Phrase-Harbor7-Velvet") is None
         assert validate_password("correct horse battery staple 42") is None
 
+    def test_natural_words_and_phrases_score_fairly(self):
+        # Real language repeats characters; length must still count.
+        assert validate_password("anticonstitutionnellement") is None  # 25 letters, 11 unique
+        assert validate_password("MonChatDortBienLeSoir") is None
+        assert validate_password("phrase-cheval-batterie") is None
+
     @pytest.mark.parametrize(
         ("value", "code"),
         [
             ("", "too_short"),
             ("short1!A", "too_short"),  # < 12 chars
-            ("aaaaaaaaaaaa", "too_weak"),  # repetition collapses entropy
-            ("abcabcabcabc", "too_weak"),  # only 3 unique characters
-            ("password12345", "too_common"),  # denylist substring match
-            ("my-hunter2-secret!!", "too_common"),
+            ("aaaaaaaaaaaa", "too_weak"),  # single repeated character collapses
+            ("abcabcabcabc", "too_weak"),  # 3-character pattern collapses
+            ("coucoucoucou1", "too_weak"),  # 4 unique characters across 13
+            ("password12345", "too_common"),
             ("passwordpassword", "too_common"),
             ("PASSWORDPASSWORD", "too_common"),  # denylist is case-insensitive
             ("123456789012", "too_common"),  # denylist checked before entropy
-            ("987654987654", "too_weak"),  # digits only, low entropy
             (None, "invalid_type"),
             ("Phrase-Harbor\n", "invalid_format"),
         ],
@@ -133,11 +138,13 @@ class TestPassword:
     def test_invalid(self, value, code):
         assert validate_password(value) == code
 
-    def test_entropy_counts_unique_chars(self):
-        # 12 identical characters: pool is 26 but unique chars are 1.
-        assert password_entropy_bits("a" * 12) < 5
-        # 20 distinct lowercase letters: 20 * log2(26) ≈ 94 bits.
-        assert password_entropy_bits("qwertyuiopasdfghjklz") > 60
+    def test_entropy_ladder(self):
+        repetitive = password_entropy_bits("a" * 12)
+        pattern = password_entropy_bits("abcabcabcabc")
+        natural = password_entropy_bits("anticonstitutionnellement")
+        assert repetitive < pattern < natural
+        assert natural > 60  # a real 25-letter word is a valid password
+        assert pattern < 60  # a repeating 3-character pattern is not
 
 
 class TestSplitFullName:

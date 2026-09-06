@@ -142,11 +142,14 @@ def validate_email(value: object) -> str | None:
 
 
 def password_entropy_bits(value: str) -> float:
-    """Pool-based entropy estimate over *unique* characters.
+    """Pool-based entropy estimate with a repeat cap.
 
-    Unique-character counting collapses trivial repetition ("aaaa...") which
-    would otherwise inflate a naive length-based estimate. The pool is the sum
-    of the character-class sizes observed in the password.
+    Natural language repeats characters, so scoring only unique characters
+    punishes real passphrases ("anticonstitutionnellement" would score like
+    an 11-character password). The effective length is the actual length
+    capped at 2.5x the unique-character count: normal words keep most of
+    their length credit while degenerate repetition ("aaaa", "abcabc")
+    collapses. The pool is the sum of the character-class sizes observed.
     """
     pool = 0
     if any(ch.islower() for ch in value):
@@ -159,7 +162,8 @@ def password_entropy_bits(value: str) -> float:
         pool += 33
     if pool == 0:
         return 0.0
-    return len(set(value)) * math.log2(pool)
+    effective_length = min(len(value), 2.5 * len(set(value)))
+    return effective_length * math.log2(pool)
 
 
 def validate_password(value: object) -> str | None:
