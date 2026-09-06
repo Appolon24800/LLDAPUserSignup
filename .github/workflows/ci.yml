@@ -70,7 +70,7 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq nginx-light
           echo "127.0.0.1 backend" | sudo tee -a /etc/hosts >/dev/null
           printf 'pid /tmp/nginx.pid;\nerror_log /tmp/nginx-error.log;\nevents {}\nhttp {\n  access_log /tmp/nginx-access.log;\n  include %s/nginx.conf;\n}\n' "$PWD" > /tmp/nginx-wrapper.conf
-          nginx -t -c /tmp/nginx-wrapper.conf
+          sudo nginx -t -c /tmp/nginx-wrapper.conf
 
   integration:
     name: Integration — real LLDAP container
