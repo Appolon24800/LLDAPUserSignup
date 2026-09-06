@@ -69,8 +69,6 @@ def test_user_lifecycle():
         photo_jpeg=b"\xff\xd8\xff\xe0integration",
     )
     assert service().user_exists(username) is True
-    # The avatar travels through the GraphQL API, not the LDAP ADD.
-    service().graphql.upload_avatar(username, b"\xff\xd8\xff\xe0integration")
 
     with pytest.raises(UserAlreadyExistsError):
         service().create_user(

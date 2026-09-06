@@ -39,6 +39,18 @@ def _is_duplicate_user_error(err: BaseException) -> bool:
     return "alreadyexists" in text or "unique constraint failed: users.user_id" in text
 
 
+def _is_photo_rejected(err: BaseException) -> bool:
+    """LLDAP builds that validate attributes as UTF-8 reject a binary
+    jpegPhoto with constraintViolation/undefinedAttributeType."""
+    text = str(err).lower()
+    if "jpegphoto" not in text:
+        return False
+    return any(
+        marker in text
+        for marker in ("constraintviolation", "undefinedattributetype", "invalid utf-8")
+    )
+
+
 class GroupAssigner(Protocol):
     """Anything that can add a user to a group (see app.lldap_api)."""
 
@@ -191,18 +203,25 @@ class LdapService:
             "givenName": first_name,
             "mail": email,
         }
-        # No jpegPhoto here: several LLDAP builds validate attributes as
-        # UTF-8 and reject the binary photo; avatars go through the GraphQL
-        # API after creation instead.
+        if photo_jpeg is not None:
+            attributes["jpegPhoto"] = photo_jpeg
         try:
             with self._connection_factory() as conn:
-                if not conn.add(self.user_dn(username), attributes=attributes):
-                    description = str(conn.result.get("description", "")).lower()
-                    if "alreadyexists" in description:
-                        raise UserAlreadyExistsError(username)
-                    raise LdapServiceError(
-                        f"user creation failed: {conn.result.get('description', 'unknown')}"
+                try:
+                    self._add_user_entry(conn, username, attributes)
+                except (LdapServiceError, LDAPException) as err:
+                    # Some LLDAP builds validate attributes as UTF-8 and
+                    # reject the binary photo; the account still gets
+                    # created, just without the picture.
+                    if photo_jpeg is None or not _is_photo_rejected(err):
+                        raise
+                    logger.warning(
+                        "LLDAP rejected the profile photo for %s; "
+                        "creating the user without it",
+                        username,
                     )
+                    attributes.pop("jpegPhoto", None)
+                    self._add_user_entry(conn, username, attributes)
                 # Passwords go through the RFC 3062 Password Modify extended
                 # operation: some LLDAP builds reject a userPassword attribute
                 # on ADD, but every version supports the extended op.
@@ -221,13 +240,17 @@ class LdapService:
             if _is_duplicate_user_error(err):
                 raise UserAlreadyExistsError(username) from err
             raise LdapServiceError(f"user creation failed: {err}") from err
-        if photo_jpeg is not None and self.graphql is not None:
-            try:
-                self.graphql.upload_avatar(username, photo_jpeg)
-            except LdapServiceError:
-                # Cosmetic: the account exists; a failed avatar must not
-                # fail the registration.
-                logger.warning("avatar upload for %s failed", username, exc_info=True)
+
+    def _add_user_entry(
+        self, conn: Connection, username: str, attributes: dict
+    ) -> None:
+        """ADD the entry, translating result codes into typed errors."""
+        if conn.add(self.user_dn(username), attributes=attributes):
+            return
+        description = str(conn.result.get("description", "unknown"))
+        if _is_duplicate_user_error(description):
+            raise UserAlreadyExistsError(username)
+        raise LdapServiceError(f"ADD failed: {description}")
 
     def delete_user(self, username: str) -> None:
         """Remove a user entry (rollback path; best effort)."""

@@ -117,57 +117,6 @@ class TestErrors:
             api.add_user_to_group("dave", "family")
 
 
-class TestAvatarUpload:
-    def _upload(self, jpeg=b"\xff\xd8jpeg"):
-        router = Router()
-        uploads = []
-
-        def post_raw(url, body, headers):
-            uploads.append((url, body, headers))
-            assert headers["Content-Type"].startswith("multipart/form-data; boundary=")
-            assert headers["Authorization"].startswith("Bearer ")
-            assert b"avatar.jpg" in body and jpeg in body
-            return {"data": {"uploadAvatar": {"ok": True}}}
-
-        api = LldapGraphQL(
-            "http://lldap:17170", "admin", "pw", post=router, post_raw=post_raw
-        )
-        api.upload_avatar("dave", jpeg)
-        return api, uploads
-
-    def test_multipart_upload_sends_file_and_auth(self):
-        _api, uploads = self._upload()
-        assert len(uploads) == 1
-        url, body, _headers = uploads[0]
-        assert url.endswith("/api/graphql")
-        assert b'name="operations"' in body and b"Upload!" in body
-        assert b'name="map"' in body and b'"variables.raw"' in body
-
-    def test_failed_upload_raises(self):
-        router = Router()
-
-        def post_raw(url, body, headers):
-            return {"data": {"uploadAvatar": {"ok": False}}}
-
-        api = LldapGraphQL(
-            "http://lldap:17170", "admin", "pw", post=router, post_raw=post_raw
-        )
-        with pytest.raises(LdapServiceError, match="avatar upload"):
-            api.upload_avatar("dave", b"\xff\xd8jpeg")
-
-    def test_graphql_errors_raise(self):
-        router = Router()
-
-        def post_raw(url, body, headers):
-            return {"errors": [{"message": "nope"}]}
-
-        api = LldapGraphQL(
-            "http://lldap:17170", "admin", "pw", post=router, post_raw=post_raw
-        )
-        with pytest.raises(LdapServiceError, match="nope"):
-            api.upload_avatar("dave", b"\xff\xd8jpeg")
-
-
 class TestHelpers:
     def test_derive_http_url(self):
         assert derive_http_url("ldap://192.168.1.39:3890") == "http://192.168.1.39:17170"

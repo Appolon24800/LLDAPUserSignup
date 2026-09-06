@@ -92,57 +92,66 @@ def test_create_user_attributes_present():
         assert entry.sn.value == "Martin"
         assert entry.givenName.value == "Bob"
         assert entry.mail.value == "bob@example.com"
-        # Neither the password nor the photo travel as ADD attributes;
-        # both go through dedicated channels (RFC 3062 / GraphQL avatar).
+        # The password is set via the RFC 3062 extended op, never stored
+        # as a plain attribute on the ADD.
         assert "userPassword" not in (entry.entry_attributes or [])
-        assert "jpegPhoto" not in (entry.entry_attributes or [])
+        assert entry.jpegPhoto.raw_values[0] == b"\xff\xd8\xff\xe0fakejpeg"
 
 
-def test_create_user_uploads_avatar_via_graphql():
-    class FakeGraphql:
-        def __init__(self):
-            self.avatars = []
-            self.groups = []
+def test_create_user_retries_without_photo_when_rejected():
+    """LLDAP builds that enforce UTF-8 attributes reject the binary photo;
+    the user must still be created, without it."""
+    from ldap3.core.exceptions import LDAPConstraintViolationResult
 
-        def upload_avatar(self, user_id, jpeg):
-            self.avatars.append((user_id, jpeg))
+    attempts = []
 
-        def add_user_to_group(self, user_id, group):
-            self.groups.append((user_id, group))
+    class RejectedFirstPhotoConn:
+        def add(self, dn, attributes=None):
+            attempts.append(dict(attributes))
+            if "jpegPhoto" in attributes:
+                raise LDAPConstraintViolationResult(
+                    result={
+                        "result": 19,
+                        "description": "constraintViolation",
+                        "message": "Attribute jpegphoto value is invalid UTF-8",
+                    }
+                )
+            return True
 
-    graphql = FakeGraphql()
-    svc = make_service()
-    svc.graphql = graphql
+        def unbind(self):
+            return True
+
+        class _Extend:
+            class standard:
+                @staticmethod
+                def modify_password(user=None, new_password=None):
+                    return True
+
+        extend = _Extend()
+
+    @contextmanager
+    def factory():
+        yield RejectedFirstPhotoConn()
+
+    svc = LdapService(
+        url="ldaps://mock:636",
+        admin_dn=ADMIN_DN,
+        admin_password="pw",
+        base_dn=BASE,
+        connection_factory=factory,
+    )
     svc.create_user(
-        "eve",
+        "gina",
         password="pw",
-        first_name="Eve",
-        last_name="Adams",
-        display_name="Eve Adams",
-        email="eve@example.com",
+        first_name="Gina",
+        last_name="Roe",
+        display_name="Gina Roe",
+        email="gina@example.com",
         photo_jpeg=b"\xff\xd8jpeg",
     )
-    assert graphql.avatars == [("eve", b"\xff\xd8jpeg")]
-
-
-def test_create_user_avatar_failure_does_not_block():
-    class FailingAvatar:
-        def upload_avatar(self, user_id, jpeg):
-            from app.ldap_service import LdapServiceError
-
-            raise LdapServiceError("upload rejected")
-
-    svc = make_service()
-    svc.graphql = FailingAvatar()
-    svc.create_user(  # must not raise
-        "frank",
-        password="pw",
-        first_name="Frank",
-        last_name="Orr",
-        display_name="Frank Orr",
-        email="frank@example.com",
-        photo_jpeg=b"\xff\xd8jpeg",
-    )
+    assert len(attempts) == 2
+    assert "jpegPhoto" in attempts[0]
+    assert "jpegPhoto" not in attempts[1]
 
 
 def test_create_duplicate_user_raises():
