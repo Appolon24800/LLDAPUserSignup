@@ -162,6 +162,52 @@ def test_list_groups_ordered_by_member_count():
     ]
 
 
+def test_tls_wiring_uses_ca_cert(monkeypatch, tmp_path):
+    """The CA path flows into ldap3's Tls as ca_certs_file."""
+    import ssl
+
+    captured = {}
+
+    class StopBuild(Exception):
+        pass
+
+    class FakeTls:
+        def __init__(self, **kwargs):
+            captured["tls_kwargs"] = kwargs
+
+    class FakeServer:
+        def __init__(self, *args, **kwargs):
+            captured["server_kwargs"] = kwargs
+            raise StopBuild
+
+    import app.ldap_service as svc_module
+
+    monkeypatch.setattr(svc_module, "Tls", FakeTls)
+    monkeypatch.setattr(svc_module, "Server", FakeServer)
+
+    def build(ca_cert=""):
+        svc = LdapService(
+            url="ldaps://lldap:636",
+            admin_dn="uid=admin,dc=x",
+            admin_password="pw",
+            base_dn="dc=x",
+            allow_insecure=False,
+            ca_cert=ca_cert,
+        )
+        with pytest.raises(StopBuild):
+            with svc._default_connection():
+                pass
+
+    build()
+    assert captured["tls_kwargs"] == {"validate": ssl.CERT_REQUIRED}
+
+    build(ca_cert=str(tmp_path / "ca.pem"))
+    assert captured["tls_kwargs"] == {
+        "validate": ssl.CERT_REQUIRED,
+        "ca_certs_file": str(tmp_path / "ca.pem"),
+    }
+
+
 def test_dn_helpers():
     svc = make_service()
     assert svc.user_dn("alice") == f"uid=alice,ou=people,{BASE}"

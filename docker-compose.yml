@@ -24,6 +24,9 @@ services:
       LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD}
       LDAP_BASE_DN: ${LDAP_BASE_DN}
       LDAP_ALLOW_INSECURE: ${LDAP_ALLOW_INSECURE:-false}
+      # Optional custom CA for LLDAP's certificate — mount it read-only too, e.g.:
+      #   volumes: ["./lldap-ca.pem:/lldap-ca.pem:ro", "signup-data:/data"]
+      LDAP_CA_CERT: ${LDAP_CA_CERT:-}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}

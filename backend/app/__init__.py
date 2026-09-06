@@ -37,6 +37,7 @@ def create_app(config: Config | None = None) -> Flask:
         admin_password=cfg.ldap_admin_password,
         base_dn=cfg.ldap_base_dn,
         allow_insecure=cfg.ldap_allow_insecure,
+        ca_cert=cfg.ldap_ca_cert,
     )
 
     if cfg.cors_allowed_origins:

@@ -81,6 +81,15 @@ def test_base_url_rejects_query_fragment_and_spaces(overrides):
         Config.from_env(ENV | overrides)
 
 
+def test_ldap_ca_cert_requires_existing_file(tmp_path):
+    ca = tmp_path / "ca.pem"
+    ca.write_text("-----BEGIN CERTIFICATE-----")
+    cfg = Config.from_env(ENV | {"LDAP_CA_CERT": str(ca)})
+    assert cfg.ldap_ca_cert == str(ca)
+    with pytest.raises(ConfigError, match="LDAP_CA_CERT"):
+        Config.from_env(ENV | {"LDAP_CA_CERT": str(tmp_path / "missing.pem")})
+
+
 @pytest.mark.parametrize(
     ("overrides", "fragment"),
     [

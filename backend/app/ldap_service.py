@@ -64,12 +64,14 @@ class LdapService:
         base_dn: str,
         allow_insecure: bool = False,
         connection_factory: ConnectionFactory | None = None,
+        ca_cert: str = "",
     ) -> None:
         self.url = url
         self.admin_dn = admin_dn
         self.admin_password = admin_password
         self.base_dn = base_dn
         self.allow_insecure = allow_insecure
+        self.ca_cert = ca_cert
         self._connection_factory = connection_factory or self._default_connection
 
     # -- connection handling ---------------------------------------------------
@@ -81,7 +83,15 @@ class LdapService:
     @contextmanager
     def _default_connection(self) -> Iterator[Connection]:
         scheme = self._scheme
-        tls = Tls(validate=ssl.CERT_REQUIRED) if not self.allow_insecure else None
+        if self.allow_insecure:
+            tls = None
+        else:
+            # ca_certs_file makes ldap3 use create_default_context(cafile=...);
+            # without it the system trust store applies (SSL_CERT_FILE honored).
+            tls_kwargs = {"validate": ssl.CERT_REQUIRED}
+            if self.ca_cert:
+                tls_kwargs["ca_certs_file"] = self.ca_cert
+            tls = Tls(**tls_kwargs)
         try:
             server = Server(
                 urlparse(self.url).netloc,

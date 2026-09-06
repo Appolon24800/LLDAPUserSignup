@@ -100,7 +100,8 @@ def create_code():
     # be created but left out of its intended groups.
     try:
         available = {g.name for g in _ldap().list_groups()}
-    except LdapServiceError:
+    except LdapServiceError as err:
+        current_app.logger.error("LDAP unavailable (create code): %s", err)
         raise ApiError(ErrorCode.LDAP_ERROR, "The directory is unavailable", 502) from None
     unknown = [g for g in groups if g not in available]
     if unknown:
@@ -174,6 +175,7 @@ def list_groups():
     """Group names with member counts, most-populated first (for the bot picker)."""
     try:
         groups = _ldap().list_groups()
-    except LdapServiceError:
+    except LdapServiceError as err:
+        current_app.logger.error("LDAP unavailable (list groups): %s", err)
         raise ApiError(ErrorCode.LDAP_ERROR, "The directory is unavailable", 502) from None
     return jsonify({"groups": [{"name": g.name, "members": g.members} for g in groups]})

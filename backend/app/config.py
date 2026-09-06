@@ -77,6 +77,10 @@ class Config:
     ldap_admin_password: str
     ldap_base_dn: str
     ldap_allow_insecure: bool
+    # Optional path (inside the container) to a CA bundle/PEM used to verify
+    # the LLDAP certificate — e.g. an internal CA or LLDAP's own self-signed
+    # cert. Empty = system trust store (Python also honors SSL_CERT_FILE).
+    ldap_ca_cert: str = ""
     internal_api_key: str
     flask_secret_key: str
     cors_allowed_origins: tuple[str, ...]
@@ -118,6 +122,10 @@ class Config:
         parsed = urlparse(ldap_url)
         if parsed.scheme not in ("ldap", "ldaps") or not parsed.netloc:
             raise ConfigError(f"LDAP_URL must be an ldap(s)://host:port URL, got {ldap_url!r}")
+
+        ldap_ca_cert = env.get("LDAP_CA_CERT", "").strip()
+        if ldap_ca_cert and not os.path.isfile(ldap_ca_cert):
+            raise ConfigError(f"LDAP_CA_CERT file not found: {ldap_ca_cert!r}")
 
         raw_origins = env.get("CORS_ALLOWED_ORIGINS", "").strip()
         origins: tuple[str, ...] = ()
