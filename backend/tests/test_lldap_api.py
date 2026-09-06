@@ -124,5 +124,8 @@ class TestHelpers:
 
     def test_admin_user_from_dn(self):
         assert admin_user_from_dn("uid=admin,ou=people,dc=x") == "admin"
-        assert admin_user_from_dn("cn=weird,dc=x") == "cn=weird,dc=x"
+        assert admin_user_from_dn("cn=usersignup_bind_user,ou=people,dc=x") == (
+            "usersignup_bind_user"
+        )
         assert admin_user_from_dn("uid=solo") == "solo"
+        assert admin_user_from_dn("plainname") == "plainname"

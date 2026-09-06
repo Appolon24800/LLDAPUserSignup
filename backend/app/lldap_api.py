@@ -164,7 +164,12 @@ def derive_http_url(ldap_url: str) -> str:
 
 
 def admin_user_from_dn(dn: str) -> str:
-    """Extract the uid from a bind DN (uid=admin,ou=... -> admin)."""
-    if dn.lower().startswith("uid="):
-        return dn[4 : dn.index(",")] if "," in dn else dn[4:]
+    """Extract the login username from a bind DN's first component.
+
+    Accepts any RDN attribute (uid=admin,... or cn=svc-account,...); the
+    LDAP bind takes the full DN, but the HTTP login wants the bare value.
+    """
+    first = dn.split(",")[0].strip()
+    if "=" in first:
+        return first.split("=", 1)[1].strip()
     return dn
