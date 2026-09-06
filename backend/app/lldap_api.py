@@ -200,14 +200,19 @@ class LldapGraphQL:
 def _multipart(
     fields: dict[str, str], file_field: str, filename: str, content: bytes
 ) -> tuple[bytes, str]:
-    """Build a multipart/form-data body (GraphQL single-file upload spec)."""
+    """Build a multipart/form-data body (GraphQL single-file upload spec).
+
+    JSON parts carry an explicit application/json content type: juniper's
+    multipart parser rejects the request without it ("Content type error").
+    """
     boundary = f"----lldapsignup{uuid.uuid4().hex}"
     parts: list[bytes] = []
     for name, value in fields.items():
         parts.append(
             (
                 f"--{boundary}\r\n"
-                f'Content-Disposition: form-data; name="{name}"\r\n\r\n'
+                f'Content-Disposition: form-data; name="{name}"\r\n'
+                f"Content-Type: application/json\r\n\r\n"
                 f"{value}\r\n"
             ).encode()
         )
