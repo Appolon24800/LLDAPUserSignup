@@ -73,6 +73,7 @@ export interface ValidateCodeResult {
   valid: boolean;
   expires_at?: string;
   platform_name?: string;
+  redirect_url?: string;
 }
 
 export async function validateCode(code: string): Promise<ValidateCodeResult> {
@@ -85,6 +86,7 @@ export async function validateCode(code: string): Promise<ValidateCodeResult> {
     valid: Boolean(body.valid),
     expires_at: body.expires_at as string | undefined,
     platform_name: body.platform_name as string | undefined,
+    redirect_url: body.redirect_url as string | undefined,
   };
 }
 

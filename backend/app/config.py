@@ -100,6 +100,9 @@ class Config:
     # Optional: shown to users ("<Platform> account created") and used in
     # Telegram registration notifications. Empty = generic wording.
     platform_name: str = ""
+    # Optional: absolute URL the success screen redirects to after a 5s
+    # countdown (empty = stay on the success screen).
+    redirect_url: str = ""
     # Optional: when both are set, the backend messages the admin chats on
     # every successful registration (same token/IDs as the bot service).
     telegram_bot_token: str = ""
@@ -161,6 +164,14 @@ class Config:
         if len(platform_name) > 64 or any(ord(ch) < 32 for ch in platform_name):
             raise ConfigError("PLATFORM_NAME must be 0-64 printable characters")
 
+        redirect_url = env.get("REDIRECT_URL", "").strip()
+        if redirect_url:
+            parsed = urlparse(redirect_url)
+            if parsed.scheme not in ("http", "https") or not parsed.netloc:
+                raise ConfigError(
+                    f"REDIRECT_URL must be an absolute http(s) URL, got {redirect_url!r}"
+                )
+
         raw_notify_ids = env.get("TELEGRAM_ADMIN_IDS", "").strip()
         notify_ids: frozenset[int] = frozenset()
         if raw_notify_ids:
@@ -192,6 +203,7 @@ class Config:
             max_upload_mb=_int_in_range(env, "MAX_UPLOAD_MB", 2, 1, 16),
             proxy_trusted_count=_int_in_range(env, "PROXY_TRUSTED_COUNT", 1, 0, 10),
             platform_name=platform_name,
+            redirect_url=redirect_url,
             telegram_bot_token=env.get("TELEGRAM_BOT_TOKEN", "").strip(),
             telegram_admin_ids=notify_ids,
             ldap_ca_cert=ldap_ca_cert,

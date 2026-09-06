@@ -153,6 +153,47 @@ describe("wizard flow", () => {
     expect(screen.getByText(/Welcome, Alice Smith!/i)).toBeInTheDocument();
   });
 
+  it("redirects after a countdown when the backend provides a redirect_url", async () => {
+    const locationDescriptor = Object.getOwnPropertyDescriptor(window, "location");
+    const assign = vi.fn();
+    Object.defineProperty(window, "location", {
+      value: { ...window.location, assign },
+      writable: true,
+    });
+    try {
+      setUrl("/register?code=good");
+      mockedValidate.mockResolvedValue({
+        valid: true,
+        expires_at: "2030-01-01T00:00:00Z",
+        platform_name: "Acme",
+        redirect_url: "https://chat.example.com/rooms/main",
+      });
+      mockedRegister.mockResolvedValue("alice_smith");
+      render(<App />);
+      await fillIdentity();
+      await userEvent.click(screen.getByRole("button", { name: /continue/i }));
+      await userEvent.type(await screen.findByLabelText(/^password/i), "Phrase-Harbor7-Velvet");
+      await userEvent.type(screen.getByLabelText(/confirm password/i), "Phrase-Harbor7-Velvet");
+      await userEvent.click(screen.getByRole("button", { name: /continue/i }));
+      await userEvent.click(await screen.findByRole("button", { name: /create my account/i }));
+
+      expect(await screen.findByText(/Welcome, Alice Smith!/i)).toBeInTheDocument();
+      const link = screen.getByRole("link", { name: /continue/i });
+      expect(link).toHaveAttribute("href", "https://chat.example.com/rooms/main");
+      expect(screen.getByText(/Automatic redirection in 5s/i)).toBeInTheDocument();
+
+      // Real 5s countdown; the assign spy fires when it elapses.
+      await waitFor(
+        () => expect(assign).toHaveBeenCalledWith("https://chat.example.com/rooms/main"),
+        { timeout: 7000 },
+      );
+    } finally {
+      if (locationDescriptor) {
+        Object.defineProperty(window, "location", locationDescriptor);
+      }
+    }
+  }, 9000);
+
   it("shows a failure screen with a translated error", async () => {
     mockedRegister.mockRejectedValue(new ApiError("ldap_error", 502));
     render(<App />);

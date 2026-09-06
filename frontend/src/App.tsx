@@ -54,6 +54,7 @@ export default function App() {
   const [phase, setPhase] = useState<Phase>({ name: "checking-code" });
   const [code, setCode] = useState<string | null>(null);
   const [platform, setPlatform] = useState("");
+  const [redirectUrl, setRedirectUrl] = useState("");
   const [identity, setIdentity] = useState<Identity>(EMPTY_IDENTITY);
   const [usernameEdited, setUsernameEdited] = useState(false);
   const [password, setPassword] = useState("");
@@ -76,6 +77,7 @@ export default function App() {
         if (result.valid) {
           setCode(codeParam);
           setPlatform(result.platform_name ?? "");
+          setRedirectUrl(result.redirect_url ?? "");
           setPhase({ name: "identity" });
         }
       })
@@ -127,7 +129,11 @@ export default function App() {
       {phase.name === "code-error" && <CodeErrorScreen errorCode={phase.errorCode} />}
       {phase.name === "submitting" && <CheckingScreen />}
       {phase.name === "success" && (
-        <SuccessScreen displayName={identity.fullName} platform={platform} />
+        <SuccessScreen
+          displayName={identity.fullName}
+          platform={platform}
+          redirectUrl={redirectUrl || undefined}
+        />
       )}
       {phase.name === "failure" && (
         <FailureScreen

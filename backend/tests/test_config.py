@@ -55,6 +55,16 @@ def test_from_env_all_values():
     assert cfg.base_url == "https://signup.example.com"  # trailing slash stripped
 
 
+def test_redirect_url_optional_and_validated():
+    cfg = Config.from_env(ENV | {"REDIRECT_URL": "https://chat.example.com/rooms/main"})
+    assert cfg.redirect_url == "https://chat.example.com/rooms/main"
+    assert Config.from_env(ENV).redirect_url == ""
+    with pytest.raises(ConfigError, match="REDIRECT_URL"):
+        Config.from_env(ENV | {"REDIRECT_URL": "chat.example.com"})
+    with pytest.raises(ConfigError, match="REDIRECT_URL"):
+        Config.from_env(ENV | {"REDIRECT_URL": "ftp://x"})
+
+
 def test_base_url_subpath_is_kept():
     cfg = Config.from_env(ENV | {"BASE_URL": "https://home.appolon.dev/signup/"})
     assert cfg.base_url == "https://home.appolon.dev/signup"

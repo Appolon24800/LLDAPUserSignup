@@ -107,6 +107,7 @@ def validate_code():
             "valid": True,
             "expires_at": expires,
             "platform_name": _cfg().platform_name,
+            "redirect_url": _cfg().redirect_url,
         }
     )
 
