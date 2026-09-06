@@ -55,9 +55,40 @@ jobs:
           printf 'pid /tmp/nginx.pid;\nerror_log /tmp/nginx-error.log;\nevents {}\nhttp {\n  access_log /tmp/nginx-access.log;\n  include %s/nginx.conf;\n}\n' "$PWD/frontend" > /tmp/nginx-wrapper.conf
           sudo nginx -t -c /tmp/nginx-wrapper.conf
 
+  integration:
+    name: Gate — LLDAP integration
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      lldap:
+        image: lldap/lldap:stable
+        env:
+          LLDAP_LDAP_USER: admin
+          LLDAP_LDAP_USER_PASS: integration-test-password
+          LLDAP_LDAP_BASE_DN: dc=example,dc=com
+        ports:
+          - 3890:3890
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: sleep 10
+      - run: pytest tests/integration
+        env:
+          INTEGRATION_LLDAP_URL: ldap://localhost:3890
+          INTEGRATION_ADMIN_DN: uid=admin,ou=people,dc=example,dc=com
+          INTEGRATION_ADMIN_PASSWORD: integration-test-password
+          INTEGRATION_BASE_DN: dc=example,dc=com
+
   build-and-push:
     name: Build and push ${{ matrix.component }}
-    needs: gate
+    needs: [gate, integration]
     runs-on: ubuntu-latest
     permissions:
       contents: read

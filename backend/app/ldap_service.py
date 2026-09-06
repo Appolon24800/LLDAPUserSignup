@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
-from ldap3 import MODIFY_ADD, Connection, Server, Tls
+from ldap3 import MODIFY_ADD, NO_ATTRIBUTES, Connection, Server, Tls
 from ldap3.core.exceptions import LDAPBindError, LDAPException
 
 USER_OU = "ou=people"
@@ -134,12 +134,14 @@ class LdapService:
     # -- operations ------------------------------------------------------------------
 
     def user_exists(self, username: str) -> bool:
+        # No attributes requested: "dn" is not a real attribute type and
+        # ldap3 validates requested attributes against the server schema.
         with self._connection_factory() as conn:
             return conn.search(
                 search_base=self.user_dn(username),
                 search_filter="(objectClass=*)",
                 search_scope="BASE",
-                attributes=["dn"],
+                attributes=NO_ATTRIBUTES,
             )
 
     def create_user(

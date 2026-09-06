@@ -171,7 +171,16 @@ def register():
             )
         )
 
-    if _ldap().user_exists(username):
+    try:
+        already_exists = _ldap().user_exists(username)
+    except LdapServiceError as err:
+        current_app.logger.error("LDAP unavailable (user exists check): %s", err)
+        raise ApiError(
+            ErrorCode.LDAP_ERROR,
+            "The directory is unavailable; please try again later",
+            502,
+        ) from err
+    if already_exists:
         raise _fail(
             ApiError(
                 ErrorCode.USERNAME_TAKEN,
