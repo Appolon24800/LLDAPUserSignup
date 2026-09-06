@@ -109,23 +109,29 @@ def test_create_duplicate_user_raises():
         )
 
 
-def test_add_to_groups():
-    svc = make_service(seeded_groups=("family", "media"))
-    svc.create_user(
-        "dave",
-        password="pw",
-        first_name="Dave",
-        last_name="Brown",
-        display_name="Dave Brown",
-        email="dave@example.com",
-    )
+def test_add_to_groups_delegates_to_graphql():
+    """LLDAP cannot modify groups over LDAP; membership goes via GraphQL."""
+
+    class FakeGraphql:
+        def __init__(self):
+            self.calls = []
+
+        def add_user_to_group(self, user, group):
+            self.calls.append((user, group))
+
+    graphql = FakeGraphql()
+    svc = make_service()
+    svc.graphql = graphql
     svc.add_to_groups("dave", ["family", "media"])
-    with svc._connection_factory() as conn:
-        conn.search(
-            f"cn=family,ou=groups,{BASE}", "(objectClass=*)", attributes=["member"]
-        )
-        members = conn.entries[0].member.values
-        assert f"uid=dave,ou=people,{BASE}" in [str(m) for m in members]
+    assert graphql.calls == [("dave", "family"), ("dave", "media")]
+
+
+def test_add_to_groups_without_graphql_fails_clearly():
+    from app.ldap_service import LdapServiceError
+
+    svc = make_service()
+    with pytest.raises(LdapServiceError, match="LLDAP_HTTP_URL"):
+        svc.add_to_groups("dave", ["family"])
 
 
 def test_list_groups_ordered_by_member_count():

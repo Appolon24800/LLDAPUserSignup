@@ -12,18 +12,29 @@ LDAP_ALLOW_INSECURE (development / containerized test instances).
 
 from __future__ import annotations
 
+import logging
 import ssl
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
-from ldap3 import MODIFY_ADD, NO_ATTRIBUTES, NONE, Connection, Server, Tls
-from ldap3.core.exceptions import LDAPBindError, LDAPException
+from ldap3 import NO_ATTRIBUTES, NONE, Connection, Server, Tls
+from ldap3.core.exceptions import (
+    LDAPBindError,
+    LDAPException,
+    LDAPNoSuchObjectResult,
+)
 
 USER_OU = "ou=people"
 GROUP_OU = "ou=groups"
 RECEIVE_TIMEOUT_SECONDS = 15
+
+logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:  # avoids a circular runtime import (lldap_api uses our errors)
+    from .lldap_api import LldapGraphQL
 
 
 class LdapServiceError(Exception):
@@ -65,6 +76,7 @@ class LdapService:
         allow_insecure: bool = False,
         connection_factory: ConnectionFactory | None = None,
         ca_cert: str = "",
+        graphql: LldapGraphQL | None = None,
     ) -> None:
         self.url = url
         self.admin_dn = admin_dn
@@ -72,6 +84,7 @@ class LdapService:
         self.base_dn = base_dn
         self.allow_insecure = allow_insecure
         self.ca_cert = ca_cert
+        self.graphql = graphql
         self._connection_factory = connection_factory or self._default_connection
 
     # -- connection handling ---------------------------------------------------
@@ -139,13 +152,16 @@ class LdapService:
     def user_exists(self, username: str) -> bool:
         # No attributes requested: "dn" is not a real attribute type and
         # ldap3 validates requested attributes against the server schema.
-        with self._connection_factory() as conn:
-            return conn.search(
-                search_base=self.user_dn(username),
-                search_filter="(objectClass=*)",
-                search_scope="BASE",
-                attributes=NO_ATTRIBUTES,
-            )
+        try:
+            with self._connection_factory() as conn:
+                return conn.search(
+                    search_base=self.user_dn(username),
+                    search_filter="(objectClass=*)",
+                    search_scope="BASE",
+                    attributes=NO_ATTRIBUTES,
+                )
+        except LDAPNoSuchObjectResult:
+            return False  # base DN absent -> the user does not exist
 
     def create_user(
         self,
@@ -191,20 +207,25 @@ class LdapService:
             raise LdapServiceError(f"user deletion failed: {err}") from err
 
     def add_to_groups(self, username: str, groups: list[str] | tuple[str, ...]) -> None:
-        user_dn = self.user_dn(username)
-        try:
-            with self._connection_factory() as conn:
-                for group in groups:
-                    ok = conn.modify(
-                        self.group_dn(group),
-                        {"member": [(MODIFY_ADD, [user_dn])]},
-                    )
-                    if not ok:
-                        raise GroupNotFoundError(group)
-        except LdapServiceError:
-            raise
-        except LDAPException as err:
-            raise LdapServiceError(f"group membership update failed: {err}") from err
+        """Add the user to the given groups.
+
+        LLDAP's LDAP interface cannot modify groups, so membership goes
+        through the GraphQL API (see app.lldap_api). api must be provided
+        by deployments; mocks/tests inject their own behavior.
+        """
+        if self.graphql is None:
+            raise LdapServiceError(
+                "group membership requires LLDAP_HTTP_URL (LLDAP GraphQL API)"
+            )
+        last_error: Exception | None = None
+        for group in groups:
+            try:
+                self.graphql.add_user_to_group(username, group)
+            except LdapServiceError as err:
+                last_error = err
+                logger.warning("adding %s to group %s failed: %s", username, group, err)
+        if last_error:
+            raise LdapServiceError(f"group membership update failed: {last_error}")
 
     def list_groups(self) -> list[Group]:
         """Groups with member counts, most-populated first (ties by name).

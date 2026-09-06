@@ -14,6 +14,7 @@ import uuid
 import pytest
 
 from app.ldap_service import LdapService, UserAlreadyExistsError
+from app.lldap_api import LldapGraphQL, admin_user_from_dn
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("INTEGRATION_LLDAP_URL"), reason="no integration LLDAP configured"
@@ -42,6 +43,11 @@ def service() -> LdapService:
         admin_password=os.environ["INTEGRATION_ADMIN_PASSWORD"],
         base_dn=os.environ["INTEGRATION_BASE_DN"],
         allow_insecure=True,  # container-to-container plaintext, CI only
+        graphql=LldapGraphQL(
+            base_url=os.environ["INTEGRATION_LLDAP_HTTP_URL"],
+            username=admin_user_from_dn(os.environ["INTEGRATION_ADMIN_DN"]),
+            password=os.environ["INTEGRATION_ADMIN_PASSWORD"],
+        ),
     )
 
 

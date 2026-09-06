@@ -91,6 +91,12 @@ class Config:
     # the LLDAP certificate — e.g. an internal CA or LLDAP's own self-signed
     # cert. Empty = system trust store (Python also honors SSL_CERT_FILE).
     ldap_ca_cert: str = ""
+    # LLDAP's GraphQL API (group membership must go through it; the LDAP
+    # interface cannot modify groups). Derived from LDAP_URL (same host,
+    # port 17170) when empty. Admin login user defaults to the uid in
+    # LDAP_ADMIN_DN.
+    lldap_http_url: str = ""
+    lldap_admin_user: str = ""
     # Optional: shown to users ("<Platform> account created") and used in
     # Telegram registration notifications. Empty = generic wording.
     platform_name: str = ""
@@ -126,6 +132,14 @@ class Config:
         ldap_ca_cert = env.get("LDAP_CA_CERT", "").strip()
         if ldap_ca_cert and not os.path.isfile(ldap_ca_cert):
             raise ConfigError(f"LDAP_CA_CERT file not found: {ldap_ca_cert!r}")
+
+        lldap_http_url = env.get("LLDAP_HTTP_URL", "").strip().rstrip("/")
+        if lldap_http_url:
+            parsed = urlparse(lldap_http_url)
+            if parsed.scheme not in ("http", "https") or not parsed.netloc:
+                raise ConfigError(
+                    f"LLDAP_HTTP_URL must be an absolute http(s) URL, got {lldap_http_url!r}"
+                )
 
         raw_origins = env.get("CORS_ALLOWED_ORIGINS", "").strip()
         origins: tuple[str, ...] = ()
@@ -181,4 +195,6 @@ class Config:
             telegram_bot_token=env.get("TELEGRAM_BOT_TOKEN", "").strip(),
             telegram_admin_ids=notify_ids,
             ldap_ca_cert=ldap_ca_cert,
+            lldap_http_url=lldap_http_url,
+            lldap_admin_user=env.get("LLDAP_ADMIN_USER", "").strip(),
         )

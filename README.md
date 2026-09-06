@@ -148,7 +148,10 @@ are fire-and-forget — a Telegram outage never affects signups.
   conversion is never trusted.
 - **LDAP**: LDAPS or StartTLS before bind (credentials never cross the network
   in plaintext; plain LDAP requires explicit `LDAP_ALLOW_INSECURE=true` for
-  development), certificate validation on by default.
+  development), certificate validation on by default. User creation goes over
+  LDAP; **group membership goes through LLDAP's GraphQL API** (`LLDAP_HTTP_URL`,
+  derived from `LDAP_URL` as `host:17170` when empty) because LLDAP's LDAP
+  interface cannot modify groups — the same admin credentials are reused.
 - **Secrets**: backend env vars only — never in the frontend bundle, never in
   logs. The bot authenticates to the backend's `/internal/*` API with
   `INTERNAL_API_KEY` compared in constant time. CORS is locked to explicit

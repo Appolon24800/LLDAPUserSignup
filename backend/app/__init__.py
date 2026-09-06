@@ -14,6 +14,7 @@ from .db import init_db
 from .errors import ApiError, ErrorCode, error_response
 from .ldap_service import LdapService
 from .limiter import limiter
+from .lldap_api import LldapGraphQL, admin_user_from_dn, derive_http_url
 from .lockout import IpLockout
 
 
@@ -46,6 +47,11 @@ def create_app(config: Config | None = None) -> Flask:
         base_dn=cfg.ldap_base_dn,
         allow_insecure=cfg.ldap_allow_insecure,
         ca_cert=cfg.ldap_ca_cert,
+        graphql=LldapGraphQL(
+            base_url=cfg.lldap_http_url or derive_http_url(cfg.ldap_url),
+            username=cfg.lldap_admin_user or admin_user_from_dn(cfg.ldap_admin_dn),
+            password=cfg.ldap_admin_password,
+        ),
     )
 
     if cfg.cors_allowed_origins:
@@ -76,10 +82,11 @@ def create_app(config: Config | None = None) -> Flask:
     # Boot banner: one line that proves the app started and shows what it
     # will talk to (no secrets) — invaluable in `docker compose logs`.
     app.logger.info(
-        "backend ready: base_url=%s ldap=%s allow_insecure=%s db=%s platform=%r "
-        "code_expiry_minutes=%s max_upload_mb=%s",
+        "backend ready: base_url=%s ldap=%s lldap_api=%s allow_insecure=%s db=%s "
+        "platform=%r code_expiry_minutes=%s max_upload_mb=%s",
         cfg.base_url,
         cfg.ldap_url,
+        cfg.lldap_http_url or derive_http_url(cfg.ldap_url),
         cfg.ldap_allow_insecure,
         cfg.database_path,
         cfg.platform_name,

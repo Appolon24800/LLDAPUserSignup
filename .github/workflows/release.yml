@@ -71,6 +71,7 @@ jobs:
           LLDAP_LDAP_BASE_DN: dc=example,dc=com
         ports:
           - 3890:3890
+          - 17170:17170
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -86,6 +87,7 @@ jobs:
           INTEGRATION_ADMIN_DN: uid=admin,ou=people,dc=example,dc=com
           INTEGRATION_ADMIN_PASSWORD: integration-test-password
           INTEGRATION_BASE_DN: dc=example,dc=com
+          INTEGRATION_LLDAP_HTTP_URL: http://localhost:17170
 
   build-and-push:
     name: Build and push ${{ matrix.component }}

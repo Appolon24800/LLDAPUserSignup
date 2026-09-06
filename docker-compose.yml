@@ -27,6 +27,9 @@ services:
       # Optional custom CA for LLDAP's certificate — mount it read-only too, e.g.:
       #   volumes: ["./lldap-ca.pem:/lldap-ca.pem:ro", "signup-data:/data"]
       LDAP_CA_CERT: ${LDAP_CA_CERT:-}
+      # LLDAP GraphQL API (group membership); derived from LDAP_URL if empty.
+      LLDAP_HTTP_URL: ${LLDAP_HTTP_URL:-}
+      LLDAP_ADMIN_USER: ${LLDAP_ADMIN_USER:-}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
       FLASK_SECRET_KEY: ${FLASK_SECRET_KEY}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
