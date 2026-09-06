@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
-from ldap3 import MODIFY_ADD, NO_ATTRIBUTES, Connection, Server, Tls
+from ldap3 import MODIFY_ADD, NO_ATTRIBUTES, NONE, Connection, Server, Tls
 from ldap3.core.exceptions import LDAPBindError, LDAPException
 
 USER_OU = "ou=people"
@@ -99,6 +99,9 @@ class LdapService:
                 use_ssl=scheme == "ldaps",
                 tls=tls,
                 connect_timeout=RECEIVE_TIMEOUT_SECONDS,
+                # Skip the DSE/schema download on every connection: LLDAP
+                # serves it slowly and the app never consults the schema.
+                get_info=NONE,
             )
             conn = Connection(
                 server,
