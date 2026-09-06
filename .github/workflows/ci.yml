@@ -68,7 +68,7 @@ jobs:
       - name: Validate nginx config syntax
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq nginx-light
-          printf 'events {}\nhttp {\n  upstream backend { server 127.0.0.1:8000; }\n  server { listen 8080; include %s/nginx.conf; }\n}\n' "$PWD" > /tmp/nginx-wrapper.conf
+          printf 'events {}\nhttp {\n  upstream backend { server 127.0.0.1:8000; }\n  include %s/nginx.conf;\n}\n' "$PWD" > /tmp/nginx-wrapper.conf
           nginx -t -c /tmp/nginx-wrapper.conf
 
   integration:
