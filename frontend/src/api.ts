@@ -1,9 +1,30 @@
 /**
- * Backend API client. Base URL comes from VITE_API_BASE_URL; empty means
- * same-origin (the bundled nginx proxies /api/v1 to the backend).
+ * Backend API client.
+ *
+ * Base URL resolution, in order:
+ * 1. VITE_API_BASE_URL (split-origin deployments);
+ * 2. derived from the page URL, so a subpath deployment
+ *    (https://host/signup/register?code=...) calls /signup/api/v1/...;
+ * 3. same-origin root ("" -> /api/v1/...).
  */
 
-const BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+/**
+ * Pure helper for the runtime base derivation. The wizard page is always
+ * served at {base}/register, so stripping a trailing "/register" (or a
+ * trailing slash) from the pathname yields the deployment base path.
+ */
+export function deriveApiBase(pathname: string, envBase?: string): string {
+  const configured = envBase?.replace(/\/+$/, "");
+  if (configured) return configured;
+  if (pathname.endsWith("/register")) return pathname.slice(0, -"/register".length);
+  if (pathname.length > 1 && pathname.endsWith("/")) return pathname.slice(0, -1);
+  return "";
+}
+
+const BASE = deriveApiBase(
+  window.location.pathname,
+  import.meta.env.VITE_API_BASE_URL as string | undefined,
+);
 
 export class ApiError extends Error {
   code: string;

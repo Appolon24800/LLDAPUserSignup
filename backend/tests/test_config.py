@@ -55,6 +55,32 @@ def test_from_env_all_values():
     assert cfg.base_url == "https://signup.example.com"  # trailing slash stripped
 
 
+def test_base_url_subpath_is_kept():
+    cfg = Config.from_env(ENV | {"BASE_URL": "https://home.appolon.dev/signup/"})
+    assert cfg.base_url == "https://home.appolon.dev/signup"
+
+
+def test_base_url_subpath_builds_prefixed_links():
+    cfg = Config.from_env(ENV | {"BASE_URL": "https://home.appolon.dev/signup"})
+    # internal API composes {BASE_URL}/register?code=...
+    assert cfg.base_url + "/register?code=x" == (
+        "https://home.appolon.dev/signup/register?code=x"
+    )
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"BASE_URL": "https://x.example/signup?foo=1"},
+        {"BASE_URL": "https://x.example/signup#frag"},
+        {"BASE_URL": "https://x.example/sign up"},
+    ],
+)
+def test_base_url_rejects_query_fragment_and_spaces(overrides):
+    with pytest.raises(ConfigError, match="BASE_URL"):
+        Config.from_env(ENV | overrides)
+
+
 @pytest.mark.parametrize(
     ("overrides", "fragment"),
     [

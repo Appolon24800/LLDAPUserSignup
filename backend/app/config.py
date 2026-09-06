@@ -15,6 +15,8 @@ from urllib.parse import urlparse
 _RATE_LIMIT_RE = re.compile(r"^\d+\s+per\s+(second|minute|hour|day)$", re.IGNORECASE)
 # scheme://host[:port] — no paths, no wildcards.
 _ORIGIN_RE = re.compile(r"^https?://[A-Za-z0-9.\-]+(?::\d+)?$")
+# Subpaths in BASE_URL (e.g. https://host/signup) — link-safe characters only.
+_BASE_PATH_RE = re.compile(r"^[A-Za-z0-9._~/-]*$")
 
 # Arbitrary floor for generated secrets: 32 chars of base64 ≈ 190 bits.
 _MIN_SECRET_LENGTH = 32
@@ -97,11 +99,20 @@ class Config:
     def from_env(cls, env: Mapping[str, str] | None = None) -> Config:
         env = os.environ if env is None else env
 
-        base_url = _required(env, "BASE_URL").rstrip("/")
+        base_url = _required(env, "BASE_URL")
         parsed = urlparse(base_url)
-        valid = parsed.scheme in ("http", "https") and parsed.netloc and parsed.path in ("", "/")
-        if not valid:
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
             raise ConfigError(f"BASE_URL must be an absolute http(s) URL, got {base_url!r}")
+        if parsed.query or parsed.fragment:
+            raise ConfigError("BASE_URL must not contain a query string or fragment")
+        base_path = parsed.path.rstrip("/")
+        if not _BASE_PATH_RE.fullmatch(base_path):
+            raise ConfigError(
+                "BASE_URL path may only contain letters, digits, dots, underscores, "
+                "hyphens and slashes"
+            )
+        # Keep an optional subpath (https://host/signup); trailing slash removed.
+        base_url = f"{parsed.scheme}://{parsed.netloc}{base_path}"
 
         ldap_url = _required(env, "LDAP_URL").rstrip("/")
         parsed = urlparse(ldap_url)

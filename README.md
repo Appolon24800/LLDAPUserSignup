@@ -82,6 +82,32 @@ There are now **two** proxy hops in front of the backend (your proxy + the bundl
 nginx), so set `PROXY_TRUSTED_COUNT=2` in `.env` — this keeps IP-based rate
 limiting and lockouts keyed on the real client address.
 
+### Hosting under a subpath (e.g. `https://host/signup`)
+
+Set `BASE_URL=https://host/signup` — registration links keep the prefix
+(`https://host/signup/register?code=…`). Route everything under `/signup/` to
+the frontend container **without stripping the prefix**; no rebuild is needed:
+
+- the SPA is built with relative asset paths, so it loads correctly at any prefix;
+- the frontend derives its API base from its own URL (`/signup/api/v1/...`), and
+  the bundled nginx forwards both `/api/v1/` and `/<prefix>/api/v1/` to the backend.
+
+Caddy example:
+
+```
+home.example.com {
+    handle_path /signup/* {
+        uri strip_prefix /signup   # optional; both styles work
+        reverse_proxy 127.0.0.1:8080
+    }
+    # pass-through alternative (no strip):
+    # handle /signup/* { reverse_proxy 127.0.0.1:8080 }
+}
+```
+
+Keep `PROXY_TRUSTED_COUNT` equal to the number of proxies in the chain
+(2 with a TLS proxy in front of the bundled nginx).
+
 ## Telegram bot commands
 
 | Command | Effect |
