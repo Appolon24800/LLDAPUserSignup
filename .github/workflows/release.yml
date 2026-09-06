@@ -52,7 +52,7 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq nginx-light
           echo "127.0.0.1 backend" | sudo tee -a /etc/hosts >/dev/null
-          printf 'events {}\nhttp {\n  include %s/nginx.conf;\n}\n' "$PWD/frontend" > /tmp/nginx-wrapper.conf
+          printf 'pid /tmp/nginx.pid;\nerror_log /tmp/nginx-error.log;\nevents {}\nhttp {\n  include %s/nginx.conf;\n}\n' "$PWD/frontend" > /tmp/nginx-wrapper.conf
           nginx -t -c /tmp/nginx-wrapper.conf
 
   build-and-push:
