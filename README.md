@@ -90,7 +90,8 @@ the frontend container **without stripping the prefix**; no rebuild is needed:
 
 - the SPA is built with relative asset paths, so it loads correctly at any prefix;
 - the frontend derives its API base from its own URL (`/signup/api/v1/...`), and
-  the bundled nginx forwards both `/api/v1/` and `/<prefix>/api/v1/` to the backend.
+  the bundled nginx forwards both `/api/v1/` and `/<prefix>/api/v1/` to the backend;
+- visiting the bare prefix (`/signup`) is redirected to `/signup/` automatically.
 
 Caddy example:
 
