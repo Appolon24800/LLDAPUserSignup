@@ -92,7 +92,9 @@ def test_create_user_attributes_present():
         assert entry.sn.value == "Martin"
         assert entry.givenName.value == "Bob"
         assert entry.mail.value == "bob@example.com"
-        assert entry.userPassword.value == "secret-pw"
+        # The password is set via the RFC 3062 extended op, never stored
+        # as a plain attribute on the ADD.
+        assert "userPassword" not in (entry.entry_attributes or [])
         assert entry.jpegPhoto.raw_values[0] == b"\xff\xd8\xff\xe0fakejpeg"
 
 

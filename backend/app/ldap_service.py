@@ -190,7 +190,6 @@ class LdapService:
             "sn": last_name,
             "givenName": first_name,
             "mail": email,
-            "userPassword": password,
         }
         if photo_jpeg is not None:
             attributes["jpegPhoto"] = photo_jpeg
@@ -203,6 +202,12 @@ class LdapService:
                     raise LdapServiceError(
                         f"user creation failed: {conn.result.get('description', 'unknown')}"
                     )
+                # Passwords go through the RFC 3062 Password Modify extended
+                # operation: some LLDAP builds reject a userPassword attribute
+                # on ADD, but every version supports the extended op.
+                conn.extend.standard.modify_password(
+                    user=self.user_dn(username), new_password=password
+                )
         except LdapServiceError as err:
             # LLDAP answers duplicates with operationsError wrapping SQLite's
             # "UNIQUE constraint failed: users.user_id", not entryAlreadyExists.
