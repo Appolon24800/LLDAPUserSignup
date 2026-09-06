@@ -92,7 +92,14 @@ limiting and lockouts keyed on the real client address.
 | `/start`, `/help` | Usage text. |
 
 Only `TELEGRAM_ADMIN_IDS` may use commands; everyone else gets a generic
-"not authorized" reply. Each user is throttled to 10 commands/minute.
+"not authorized" reply. Each user is throttled to 30 commands/minute.
+
+**Registration notifications**: when `TELEGRAM_BOT_TOKEN` and
+`TELEGRAM_ADMIN_IDS` reach the backend too (compose passes them), every
+successful registration sends `✅ <PLATFORM_NAME> account created: <display
+name>` to the admin chats. Set `PLATFORM_NAME` to brand both that message
+and the user-facing success screen ("<Platform> account created"). Sends
+are fire-and-forget — a Telegram outage never affects signups.
 
 ## Security model
 

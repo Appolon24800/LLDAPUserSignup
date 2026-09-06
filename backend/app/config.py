@@ -85,6 +85,13 @@ class Config:
     database_path: str
     max_upload_mb: int
     proxy_trusted_count: int
+    # Optional: shown to users ("<Platform> account created") and used in
+    # Telegram registration notifications. Empty = generic wording.
+    platform_name: str = ""
+    # Optional: when both are set, the backend messages the admin chats on
+    # every successful registration (same token/IDs as the bot service).
+    telegram_bot_token: str = ""
+    telegram_admin_ids: frozenset[int] = frozenset()
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Config:
@@ -117,6 +124,22 @@ class Config:
                     )
             origins = tuple(parts)
 
+        platform_name = env.get("PLATFORM_NAME", "").strip()
+        if len(platform_name) > 64 or any(ord(ch) < 32 for ch in platform_name):
+            raise ConfigError("PLATFORM_NAME must be 0-64 printable characters")
+
+        raw_notify_ids = env.get("TELEGRAM_ADMIN_IDS", "").strip()
+        notify_ids: frozenset[int] = frozenset()
+        if raw_notify_ids:
+            try:
+                notify_ids = frozenset(
+                    int(part.strip()) for part in raw_notify_ids.split(",") if part.strip()
+                )
+            except ValueError:
+                raise ConfigError(
+                    "TELEGRAM_ADMIN_IDS must be comma-separated numeric Telegram user IDs"
+                ) from None
+
         return cls(
             base_url=base_url,
             ldap_url=ldap_url,
@@ -135,4 +158,7 @@ class Config:
             database_path=_required(env, "DATABASE_PATH"),
             max_upload_mb=_int_in_range(env, "MAX_UPLOAD_MB", 2, 1, 16),
             proxy_trusted_count=_int_in_range(env, "PROXY_TRUSTED_COUNT", 1, 0, 10),
+            platform_name=platform_name,
+            telegram_bot_token=env.get("TELEGRAM_BOT_TOKEN", "").strip(),
+            telegram_admin_ids=notify_ids,
         )

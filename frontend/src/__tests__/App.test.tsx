@@ -133,6 +133,26 @@ describe("wizard flow", () => {
     expect(username).toHaveValue("eloi.fontaine.jr");
   });
 
+  it("shows the platform name and display name on success", async () => {
+    setUrl("/register?code=good");
+    mockedValidate.mockResolvedValue({
+      valid: true,
+      expires_at: "2030-01-01T00:00:00Z",
+      platform_name: "Acme",
+    });
+    mockedRegister.mockResolvedValue("alice.smith");
+    render(<App />);
+    await fillIdentity();
+    await userEvent.click(screen.getByRole("button", { name: /continue/i }));
+    await userEvent.type(await screen.findByLabelText(/^password/i), "Phrase-Harbor7-Velvet");
+    await userEvent.type(screen.getByLabelText(/confirm password/i), "Phrase-Harbor7-Velvet");
+    await userEvent.click(screen.getByRole("button", { name: /continue/i }));
+    await userEvent.click(await screen.findByRole("button", { name: /create my account/i }));
+
+    expect(await screen.findByText("Acme account created")).toBeInTheDocument();
+    expect(screen.getByText(/Welcome, Alice Smith!/i)).toBeInTheDocument();
+  });
+
   it("shows a failure screen with a translated error", async () => {
     mockedRegister.mockRejectedValue(new ApiError("ldap_error", 502));
     render(<App />);

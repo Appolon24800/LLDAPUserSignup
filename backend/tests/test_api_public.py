@@ -80,7 +80,15 @@ def test_successful_validation_resets_ip_counter(client, code):
 # --- register -------------------------------------------------------------------
 
 
-def test_register_happy_path(client, fake_ldap, code):
+def test_register_happy_path(client, fake_ldap, code, monkeypatch):
+    from app.api import public
+
+    notifications = []
+    monkeypatch.setattr(
+        public,
+        "notify_account_created",
+        lambda cfg, display_name: notifications.append(display_name),
+    )
     res = register(client, code)
     assert res.status_code == 201
     assert res.get_json() == {"username": "alice", "created": True}
@@ -90,6 +98,7 @@ def test_register_happy_path(client, fake_ldap, code):
     assert created["last_name"] == "Smith"
     assert created["display_name"] == "Alice Smith"
     assert fake_ldap.group_adds == [("alice", ["family"])]
+    assert notifications == ["Alice Smith"]  # display name, not username
     # Code is single-use now.
     assert post_json(client, "/api/v1/validate-code", {"code": code}).status_code == 400
 
@@ -140,7 +149,7 @@ def test_register_invalid_fields(client, code):
     assert field_errors["username"] == "invalid_format"
     assert field_errors["full_name"] == "invalid_format"
     assert field_errors["email"] == "invalid_format"
-    assert field_errors["password"] == "too_short"  # noqa: S105 - expected error code
+    assert field_errors["password"] == "too_short"
 
 
 def test_register_invalid_code_counts_ip_failure(client):

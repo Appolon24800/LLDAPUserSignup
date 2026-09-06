@@ -27,16 +27,19 @@ export function CodeErrorScreen({ errorCode }: { errorCode: string }) {
   );
 }
 
-/** Final success screen. */
-export function SuccessScreen({ username }: { username: string }) {
+/** Final success screen: platform-prefixed title, display name welcome. */
+export function SuccessScreen({ displayName, platform }: { displayName: string; platform: string }) {
   const { t } = useTranslation();
+  const title = platform
+    ? t("success.titlePlatform", { platform })
+    : t("success.title");
   return (
     <div className="screen fade-in">
       <div className="screen-icon ok">
         <Check strokeWidth={3} aria-hidden />
       </div>
-      <h2>{t("success.title")}</h2>
-      <p>{t("success.body", { username })}</p>
+      <h2>{title}</h2>
+      <p>{t("success.body", { name: displayName })}</p>
     </div>
   );
 }

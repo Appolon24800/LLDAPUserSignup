@@ -20,6 +20,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = [
     "S101", # asserts are the point of tests
+    "S105", # hardcoded dummy tokens in fixtures/asserts
     "S106", # hardcoded dummy passwords in fixtures
 ]
 

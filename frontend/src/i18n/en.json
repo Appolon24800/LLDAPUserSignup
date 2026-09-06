@@ -86,7 +86,8 @@
   },
   "success": {
     "title": "Account created",
-    "body": "Welcome, {{username}}! Your account is ready."
+    "titlePlatform": "{{platform}} account created",
+    "body": "Welcome, {{name}}! Your account is ready."
   },
   "failure": {
     "title": "Could not create the account"

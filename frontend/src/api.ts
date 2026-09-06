@@ -51,6 +51,7 @@ async function request(path: string, init?: RequestInit): Promise<Record<string,
 export interface ValidateCodeResult {
   valid: boolean;
   expires_at?: string;
+  platform_name?: string;
 }
 
 export async function validateCode(code: string): Promise<ValidateCodeResult> {
@@ -59,7 +60,11 @@ export async function validateCode(code: string): Promise<ValidateCodeResult> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code }),
   });
-  return { valid: Boolean(body.valid), expires_at: body.expires_at as string | undefined };
+  return {
+    valid: Boolean(body.valid),
+    expires_at: body.expires_at as string | undefined,
+    platform_name: body.platform_name as string | undefined,
+  };
 }
 
 export interface RegistrationForm {

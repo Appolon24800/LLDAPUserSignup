@@ -19,6 +19,7 @@ from ..errors import ApiError, ErrorCode
 from ..images import ImageRejected, process_photo
 from ..ldap_service import LdapServiceError, UserAlreadyExistsError
 from ..limiter import limiter
+from ..notifier import notify_account_created
 from ..validation import (
     split_full_name,
     validate_email,
@@ -100,7 +101,13 @@ def validate_code():
 
     _lockout().reset(request.remote_addr or "unknown")
     record = _store().get(code)
-    return jsonify({"valid": True, "expires_at": record.expires_at.isoformat()})
+    return jsonify(
+        {
+            "valid": True,
+            "expires_at": record.expires_at.isoformat(),
+            "platform_name": _cfg().platform_name,
+        }
+    )
 
 
 @blp.post("/register")
@@ -224,6 +231,7 @@ def register():
         ) from err
 
     _lockout().reset(request.remote_addr or "unknown")
+    notify_account_created(_cfg(), display_name=full_name)
     return jsonify({"username": username, "created": True}), 201
 
 
