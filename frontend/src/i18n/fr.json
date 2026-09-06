@@ -7,7 +7,7 @@
     "code": "Invitation",
     "identity": "Vos informations",
     "password": "Mot de passe",
-    "photo": "Photo",
+    "photo": "Image",
     "progress": "Étape {{current}} sur {{total}}"
   },
   "fields": {
@@ -24,11 +24,11 @@
     "email": { "label": "Adresse e-mail", "placeholder": "jean.dupont@example.com" },
     "password": {
       "label": "Mot de passe",
-      "placeholder": "Au moins 12 caractères",
+      "placeholder": "Au moins 10 caractères",
       "hint": "Utilisez une longue phrase facile à retenir — la longueur compte plus que la complexité."
     },
     "confirm": { "label": "Confirmer le mot de passe", "placeholder": "Saisissez-le à nouveau" },
-    "photo": { "label": "Photo de profil (facultatif)", "hint": "JPEG, PNG, GIF ou WebP — 2 Mo maximum." }
+    "photo": { "label": "Image de profil (facultatif)", "hint": "JPEG, PNG, GIF ou WebP — 2 Mo maximum." }
   },
   "feedback": {
     "required": "Ce champ est obligatoire.",
@@ -57,8 +57,8 @@
     "submit": "Créer mon compte",
     "skip": "Passer cette étape",
     "retry": "Réessayer",
-    "changePhoto": "Choisir une autre photo",
-    "addPhoto": "Ajouter une photo",
+    "changePhoto": "Choisir une autre image",
+    "addPhoto": "Ajouter une image",
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe"
   },

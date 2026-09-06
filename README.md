@@ -106,7 +106,7 @@ Only `TELEGRAM_ADMIN_IDS` may use commands; everyone else gets a generic
   `RATE_LIMIT_SUBMIT`). Successful validation resets the IP counter.
 - **Validation** (server-side, always, client is never trusted): usernames
   `^[a-z0-9._-]{3,32}$` + reserved-name denylist + LDAP uniqueness; password
-  ≥12 chars and ≥60 bits of pool-based entropy over unique characters, with a
+  ≥10 chars and ≥60 bits of pool-based entropy over unique characters, with a
   common-password denylist; names are unicode letters/spaces/hyphens/apostrophes.
 - **Photos**: size-capped (`MAX_UPLOAD_MB`, default 2 MB), identified by magic
   bytes (never extensions), decoded with `verify()`, re-encoded server-side to

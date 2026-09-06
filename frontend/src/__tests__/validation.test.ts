@@ -86,6 +86,7 @@ describe("validatePassword", () => {
   it.each([
     ["", "required"],
     ["short1!A", "too_short"],
+    ["Phr4se-Hb", "too_short"], // 9 chars
     ["aaaaaaaaaaaa", "too_weak"],
     ["abcabcabcabc", "too_weak"],
     ["coucoucoucou1", "too_weak"],
@@ -94,6 +95,10 @@ describe("validatePassword", () => {
     ["987654987654", "too_weak"],
   ])("rejects %j with %s", (value, code) => {
     expect(validatePassword(value)).toBe(code);
+  });
+
+  it("accepts a 10-character strong password", () => {
+    expect(validatePassword("Phr4se-Hb7")).toBeNull();
   });
 
   it("entropy rewards length but caps degenerate repetition", () => {

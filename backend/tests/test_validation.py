@@ -113,6 +113,10 @@ class TestPassword:
         assert validate_password("Phrase-Harbor7-Velvet") is None
         assert validate_password("correct horse battery staple 42") is None
 
+    def test_minimum_length_boundary(self):
+        assert validate_password("Phr4se-Hb7") is None  # 10 chars, > 60 bits
+        assert validate_password("Phr4se-Hb") == "too_short"  # 9 chars
+
     def test_natural_words_and_phrases_score_fairly(self):
         # Real language repeats characters; length must still count.
         assert validate_password("anticonstitutionnellement") is None  # 25 letters, 11 unique
@@ -123,7 +127,7 @@ class TestPassword:
         ("value", "code"),
         [
             ("", "too_short"),
-            ("short1!A", "too_short"),  # < 12 chars
+            ("short1!A", "too_short"),  # < 10 chars
             ("aaaaaaaaaaaa", "too_weak"),  # single repeated character collapses
             ("abcabcabcabc", "too_weak"),  # 3-character pattern collapses
             ("coucoucoucou1", "too_weak"),  # 4 unique characters across 13

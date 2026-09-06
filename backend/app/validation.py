@@ -20,7 +20,7 @@ EMAIL_RE = re.compile(
 NAME_MAX_LENGTH = 64
 EMAIL_MAX_LENGTH = 254
 
-PASSWORD_MIN_LENGTH = 12
+PASSWORD_MIN_LENGTH = 10
 PASSWORD_MIN_ENTROPY_BITS = 60
 
 # Lowercase. Usernames that commonly collide with system/service accounts.

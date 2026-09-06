@@ -7,7 +7,7 @@
     "code": "Invitation",
     "identity": "Your details",
     "password": "Password",
-    "photo": "Photo",
+    "photo": "Picture",
     "progress": "Step {{current}} of {{total}}"
   },
   "fields": {
@@ -24,11 +24,11 @@
     "email": { "label": "Email", "placeholder": "jean.dupont@example.com" },
     "password": {
       "label": "Password",
-      "placeholder": "At least 12 characters",
+      "placeholder": "At least 10 characters",
       "hint": "Use a long phrase you can remember — length beats complexity."
     },
     "confirm": { "label": "Confirm password", "placeholder": "Type it again" },
-    "photo": { "label": "Profile photo (optional)", "hint": "JPEG, PNG, GIF or WebP — max 2 MB." }
+    "photo": { "label": "Profile picture (optional)", "hint": "JPEG, PNG, GIF or WebP — max 2 MB." }
   },
   "feedback": {
     "required": "This field is required.",
@@ -57,8 +57,8 @@
     "submit": "Create my account",
     "skip": "Skip this step",
     "retry": "Try again",
-    "changePhoto": "Choose another photo",
-    "addPhoto": "Add a photo",
+    "changePhoto": "Choose another picture",
+    "addPhoto": "Add a picture",
     "showPassword": "Show password",
     "hidePassword": "Hide password"
   },
