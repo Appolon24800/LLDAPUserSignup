@@ -65,9 +65,7 @@ export async function validateCode(code: string): Promise<ValidateCodeResult> {
 export interface RegistrationForm {
   code: string;
   username: string;
-  firstName: string;
-  lastName: string;
-  displayName: string;
+  fullName: string;
   email: string;
   password: string;
 }
@@ -76,9 +74,7 @@ export async function register(form: RegistrationForm, photo?: File | null): Pro
   const data = new FormData();
   data.set("code", form.code);
   data.set("username", form.username);
-  data.set("first_name", form.firstName);
-  data.set("last_name", form.lastName);
-  data.set("display_name", form.displayName);
+  data.set("full_name", form.fullName);
   data.set("email", form.email);
   data.set("password", form.password);
   if (photo) {

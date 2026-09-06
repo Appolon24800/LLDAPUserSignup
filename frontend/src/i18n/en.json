@@ -16,14 +16,16 @@
     "progress": "Step {{current}} of {{total}}"
   },
   "fields": {
+    "fullName": {
+      "label": "Full name",
+      "placeholder": "Jean Dupont",
+      "hint": "Your name as it should appear to others."
+    },
     "username": {
       "label": "Username",
-      "placeholder": "e.g. jean.dupont",
-      "hint": "Lowercase letters, numbers, dots, hyphens — 3 to 32 characters."
+      "placeholder": "jean.dupont",
+      "hint": "Filled in from your name — change it if you prefer."
     },
-    "firstName": { "label": "First name", "placeholder": "Jean" },
-    "lastName": { "label": "Last name", "placeholder": "Dupont" },
-    "displayName": { "label": "Display name", "placeholder": "Jean Dupont", "hint": "How your name appears to others." },
     "email": { "label": "Email", "placeholder": "jean.dupont@example.com" },
     "password": {
       "label": "Password",

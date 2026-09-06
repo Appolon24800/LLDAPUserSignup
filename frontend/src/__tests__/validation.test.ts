@@ -3,6 +3,7 @@ import {
   passwordEntropyBits,
   passwordStrength,
   sniffImage,
+  suggestUsername,
   validateConfirm,
   validateEmail,
   validateName,
@@ -97,6 +98,33 @@ describe("validatePassword", () => {
     expect(passwordStrength("aaaaaaaaaaaa")).toBe("weak");
     expect(passwordStrength("abcdefghi12")).toBe("fair"); // ~57 bits
     expect(passwordStrength("Phrase-Harbor7-Velvet")).toBe("strong");
+  });
+});
+
+describe("suggestUsername", () => {
+  it("derives a dotted username from a full name", () => {
+    expect(suggestUsername("Jean Dupont")).toBe("jean.dupont");
+  });
+
+  it("strips accents", () => {
+    expect(suggestUsername("Éloi Fontaine")).toBe("eloi.fontaine");
+  });
+
+  it("collapses separators and trims edges", () => {
+    expect(suggestUsername("  Marie-Claire  O'Brien ")).toBe("marie.claire.o.brien");
+  });
+
+  it("returns empty for names too short to be valid", () => {
+    expect(suggestUsername("Al")).toBe("");
+    expect(suggestUsername("")).toBe("");
+  });
+
+  it("caps length at 32 characters on a letter boundary", () => {
+    const long = "Ab Cd Ef Gh Ij Kl Mn Op Qr St Uv Wx Yz Ab Cd Ef Gh Ij";
+    const suggested = suggestUsername(long);
+    expect(suggested.length).toBeLessThanOrEqual(32);
+    expect(suggested).toMatch(/^[a-z0-9]/);
+    expect(suggested).toMatch(/[a-z0-9]$/);
   });
 });
 

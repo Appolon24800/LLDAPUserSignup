@@ -6,6 +6,7 @@ import pytest
 
 from app.validation import (
     password_entropy_bits,
+    split_full_name,
     validate_email,
     validate_name,
     validate_password,
@@ -137,6 +138,23 @@ class TestPassword:
         assert password_entropy_bits("a" * 12) < 5
         # 20 distinct lowercase letters: 20 * log2(26) ≈ 94 bits.
         assert password_entropy_bits("qwertyuiopasdfghjklz") > 60
+
+
+class TestSplitFullName:
+    def test_two_words(self):
+        assert split_full_name("Jean Dupont") == ("Jean", "Dupont")
+
+    def test_extra_words_join_surname(self):
+        assert split_full_name("Jean Pierre Dupont") == ("Jean", "Pierre Dupont")
+
+    def test_single_word_used_for_both(self):
+        assert split_full_name("Madonna") == ("Madonna", "Madonna")
+
+    def test_collapses_whitespace(self):
+        assert split_full_name("  Jean   Dupont  ") == ("Jean", "Dupont")
+
+    def test_empty(self):
+        assert split_full_name("   ") == ("", "")
 
 
 class TestPasswordConfirm:

@@ -95,7 +95,7 @@ def validate_username(value: object) -> str | None:
 
 
 def validate_name(value: object) -> str | None:
-    """Human names (first, last, display): unicode letters, spaces, - and '."""
+    """Human names (full name): unicode letters, spaces, - and '."""
     if not isinstance(value, str):
         return "invalid_type"
     stripped = value.strip()
@@ -108,6 +108,21 @@ def validate_name(value: object) -> str | None:
     if not any(ch.isalpha() for ch in stripped):
         return "invalid_format"
     return None
+
+
+def split_full_name(full_name: str) -> tuple[str, str]:
+    """Derive (first_name, last_name) for LDAP from a single full-name string.
+
+    First word becomes the given name, the rest the surname; single-word
+    names are used for both so `sn` (required by inetOrgPerson) stays filled.
+    The display name is always the full string exactly as typed.
+    """
+    parts = full_name.split()
+    if not parts:
+        return "", ""
+    if len(parts) == 1:
+        return parts[0], parts[0]
+    return parts[0], " ".join(parts[1:])
 
 
 def validate_email(value: object) -> str | None:

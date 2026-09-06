@@ -120,9 +120,7 @@ def code(app):
 
 VALID_FORM = {
     "username": "alice",
-    "first_name": "Alice",
-    "last_name": "Smith",
-    "display_name": "Alice Smith",
+    "full_name": "Alice Smith",
     "email": "alice@example.com",
     "password": "Phrase-Harbor7-Velvet",
 }

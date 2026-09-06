@@ -20,6 +20,7 @@ from ..images import ImageRejected, process_photo
 from ..ldap_service import LdapServiceError, UserAlreadyExistsError
 from ..limiter import limiter
 from ..validation import (
+    split_full_name,
     validate_email,
     validate_name,
     validate_password,
@@ -111,9 +112,7 @@ def register():
     form = request.form
     code = (form.get("code") or "").strip()
     username = unicodedata.normalize("NFC", form.get("username") or "")
-    first_name = unicodedata.normalize("NFC", (form.get("first_name") or "").strip())
-    last_name = unicodedata.normalize("NFC", (form.get("last_name") or "").strip())
-    display_name = unicodedata.normalize("NFC", (form.get("display_name") or "").strip())
+    full_name = unicodedata.normalize("NFC", (form.get("full_name") or "").strip())
     email = unicodedata.normalize("NFC", (form.get("email") or "").strip())
     password = form.get("password") or ""
 
@@ -134,9 +133,7 @@ def register():
     field_errors: dict[str, str] = {}
     for field, value, validator in (
         ("username", username, validate_username),
-        ("first_name", first_name, validate_name),
-        ("last_name", last_name, validate_name),
-        ("display_name", display_name, validate_name),
+        ("full_name", full_name, validate_name),
         ("email", email, validate_email),
         ("password", password, validate_password),
     ):
@@ -187,12 +184,13 @@ def register():
     # failure). On UserAlreadyExistsError the entry belongs to someone else
     # and must not be touched.
     try:
+        first_name, last_name = split_full_name(full_name)
         _ldap().create_user(
             username=username,
             password=password,
             first_name=first_name,
             last_name=last_name,
-            display_name=display_name,
+            display_name=full_name,
             email=email,
             photo_jpeg=photo_jpeg,
         )

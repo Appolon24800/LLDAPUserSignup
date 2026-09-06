@@ -63,10 +63,9 @@ describe("invitation code handling", () => {
 });
 
 async function fillIdentity() {
-  await userEvent.type(await screen.findByLabelText(/^username/i), "alice");
-  await userEvent.type(screen.getByLabelText(/first name/i), "Alice");
-  await userEvent.type(screen.getByLabelText(/last name/i), "Smith");
-  await userEvent.type(screen.getByLabelText(/display name/i), "Alice Smith");
+  // Full name auto-fills the username suggestion.
+  await userEvent.type(await screen.findByLabelText(/full name/i), "Alice Smith");
+  expect(screen.getByLabelText(/^username/i)).toHaveValue("alice.smith");
   await userEvent.type(screen.getByLabelText(/email/i), "alice@example.com");
 }
 
@@ -109,9 +108,29 @@ describe("wizard flow", () => {
     expect(mockedRegister).toHaveBeenCalledTimes(1);
     const [form, photo] = mockedRegister.mock.calls[0];
     expect(form.code).toBe("good");
-    expect(form.username).toBe("alice");
+    expect(form.username).toBe("alice.smith");
+    expect(form.fullName).toBe("Alice Smith");
     expect(form.password).toBe("Phrase-Harbor7-Velvet");
     expect(photo).toBeFalsy();
+  });
+
+  it("suggests a username from the full name and respects manual edits", async () => {
+    render(<App />);
+    const fullName = await screen.findByLabelText(/full name/i);
+    await userEvent.type(fullName, "Éloi Fontaine");
+    const username = screen.getByLabelText(/^username/i);
+    expect(username).toHaveValue("eloi.fontaine");
+
+    // Manual entry wins and later name edits must not clobber it.
+    await userEvent.clear(username);
+    await userEvent.type(username, "custom-user");
+    await userEvent.type(fullName, " Jr");
+    expect(username).toHaveValue("custom-user");
+
+    // Clearing the username hands control back to the suggestion.
+    await userEvent.clear(username);
+    await userEvent.type(fullName, ".");
+    expect(username).toHaveValue("eloi.fontaine.jr");
   });
 
   it("shows a failure screen with a translated error", async () => {

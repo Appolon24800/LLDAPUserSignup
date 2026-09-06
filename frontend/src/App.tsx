@@ -16,7 +16,7 @@ import IdentityStep, {
 } from "./steps/IdentityStep";
 import PasswordStep from "./steps/PasswordStep";
 import PhotoStep from "./steps/PhotoStep";
-import { validateConfirm, validatePassword } from "./validation";
+import { suggestUsername, validateConfirm, validatePassword } from "./validation";
 
 type Phase =
   | { name: "checking-code" }
@@ -45,10 +45,8 @@ function stepOf(phase: Phase["name"]): number {
 }
 
 const EMPTY_IDENTITY: Identity = {
+  fullName: "",
   username: "",
-  firstName: "",
-  lastName: "",
-  displayName: "",
   email: "",
 };
 
@@ -57,6 +55,7 @@ export default function App() {
   const [phase, setPhase] = useState<Phase>({ name: "checking-code" });
   const [code, setCode] = useState<string | null>(null);
   const [identity, setIdentity] = useState<Identity>(EMPTY_IDENTITY);
+  const [usernameEdited, setUsernameEdited] = useState(false);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
@@ -97,9 +96,7 @@ export default function App() {
         {
           code,
           username: identity.username,
-          firstName: identity.firstName,
-          lastName: identity.lastName,
-          displayName: identity.displayName,
+          fullName: identity.fullName,
           email: identity.email,
           password,
         },
@@ -161,8 +158,20 @@ export default function App() {
               <IdentityStep
                 identity={identity}
                 onChange={(patch) => {
-                  setIdentity((prev) => ({ ...prev, ...patch }));
                   setServerErrors({});
+                  if (patch.username !== undefined) {
+                    // While the user hasn't touched it, the username follows
+                    // the suggestion derived from the full name; clearing the
+                    // field hands control back to the suggestion.
+                    setUsernameEdited(patch.username.length > 0);
+                  }
+                  if (patch.fullName !== undefined && !usernameEdited) {
+                    patch = {
+                      ...patch,
+                      username: suggestUsername(patch.fullName),
+                    };
+                  }
+                  setIdentity((prev) => ({ ...prev, ...patch }));
                 }}
                 serverErrors={serverErrors}
               />

@@ -84,10 +84,32 @@ def test_register_happy_path(client, fake_ldap, code):
     res = register(client, code)
     assert res.status_code == 201
     assert res.get_json() == {"username": "alice", "created": True}
-    assert fake_ldap.created[0]["username"] == "alice"
+    created = fake_ldap.created[0]
+    assert created["username"] == "alice"
+    assert created["first_name"] == "Alice"
+    assert created["last_name"] == "Smith"
+    assert created["display_name"] == "Alice Smith"
     assert fake_ldap.group_adds == [("alice", ["family"])]
     # Code is single-use now.
     assert post_json(client, "/api/v1/validate-code", {"code": code}).status_code == 400
+
+
+def test_register_single_word_name(client, fake_ldap, code):
+    res = register(client, code, overrides={"full_name": "Madonna"})
+    assert res.status_code == 201
+    created = fake_ldap.created[0]
+    assert created["first_name"] == "Madonna"
+    assert created["last_name"] == "Madonna"
+    assert created["display_name"] == "Madonna"
+
+
+def test_register_multi_word_surname(client, fake_ldap, code):
+    res = register(client, code, overrides={"full_name": "Jean Pierre Dupont"})
+    assert res.status_code == 201
+    created = fake_ldap.created[0]
+    assert created["first_name"] == "Jean"
+    assert created["last_name"] == "Pierre Dupont"
+    assert created["display_name"] == "Jean Pierre Dupont"
 
 
 def test_register_with_photo(client, fake_ldap, code):
@@ -106,11 +128,17 @@ def test_register_invalid_fields(client, code):
     res = register(
         client,
         code,
-        overrides={"username": "Alice!", "email": "nope", "password": "short"},
+        overrides={
+            "username": "Alice!",
+            "full_name": "Alice <script>",
+            "email": "nope",
+            "password": "short",
+        },
     )
     assert res.status_code == 400
     field_errors = res.get_json()["error"]["field_errors"]
     assert field_errors["username"] == "invalid_format"
+    assert field_errors["full_name"] == "invalid_format"
     assert field_errors["email"] == "invalid_format"
     assert field_errors["password"] == "too_short"  # noqa: S105 - expected error code
 

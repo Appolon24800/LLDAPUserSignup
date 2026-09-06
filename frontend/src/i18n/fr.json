@@ -16,14 +16,16 @@
     "progress": "Étape {{current}} sur {{total}}"
   },
   "fields": {
+    "fullName": {
+      "label": "Nom complet",
+      "placeholder": "Jean Dupont",
+      "hint": "Votre nom tel qu'il apparaîtra aux autres."
+    },
     "username": {
       "label": "Nom d'utilisateur",
-      "placeholder": "ex. jean.dupont",
-      "hint": "Lettres minuscules, chiffres, points, tirets — 3 à 32 caractères."
+      "placeholder": "jean.dupont",
+      "hint": "Rempli à partir de votre nom — modifiez-le si vous préférez."
     },
-    "firstName": { "label": "Prénom", "placeholder": "Jean" },
-    "lastName": { "label": "Nom", "placeholder": "Dupont" },
-    "displayName": { "label": "Nom affiché", "placeholder": "Jean Dupont", "hint": "Le nom tel qu'il apparaîtra aux autres." },
     "email": { "label": "Adresse e-mail", "placeholder": "jean.dupont@example.com" },
     "password": {
       "label": "Mot de passe",

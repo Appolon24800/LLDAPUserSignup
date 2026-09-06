@@ -96,6 +96,22 @@ export function validateConfirm(password: string, confirm: string): FieldError {
   return password === confirm ? null : "mismatch";
 }
 
+/**
+ * Username suggestion from a full name ("Éloi Fontaine" -> "eloi.fontaine").
+ * Returns "" when the name is too short to produce a valid username.
+ */
+export function suggestUsername(fullName: string): string {
+  const base = fullName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // strip accents
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ".")
+    .replace(/^\.+|\.+$/g, "")
+    .slice(0, 32)
+    .replace(/[^a-z0-9]$/, "");
+  return base.length >= 3 ? base : "";
+}
+
 export type Strength = "empty" | "weak" | "fair" | "strong";
 
 export function passwordStrength(value: string): Strength {
