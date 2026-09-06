@@ -15,6 +15,7 @@ from __future__ import annotations
 import ssl
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from urllib.parse import urlparse
 
 from ldap3 import MODIFY_ADD, Connection, Server, Tls
@@ -43,6 +44,12 @@ class GroupNotFoundError(LdapServiceError):
     def __init__(self, group: str) -> None:
         super().__init__(f"group {group!r} not found")
         self.group = group
+
+
+@dataclass(frozen=True)
+class Group:
+    name: str
+    members: int
 
 
 ConnectionFactory = Callable[[], Iterator[Connection]]
@@ -184,20 +191,34 @@ class LdapService:
         except LDAPException as err:
             raise LdapServiceError(f"group membership update failed: {err}") from err
 
-    def list_groups(self) -> list[str]:
+    def list_groups(self) -> list[Group]:
+        """Groups with member counts, most-populated first (ties by name).
+
+        One search covers every group: member is a multi-valued attribute
+        holding user DNs, so its value count is the membership size.
+        """
         try:
             with self._connection_factory() as conn:
                 ok = conn.search(
                     search_base=f"{GROUP_OU},{self.base_dn}",
                     search_filter="(objectClass=*)",
                     search_scope="SUBTREE",
-                    attributes=["cn"],
+                    attributes=["cn", "member"],
                 )
                 if not ok:
                     return []
-                names = sorted(
-                    {str(e.cn.value) for e in conn.entries if "cn" in e.entry_attributes}
-                )
-                return names
+                groups: list[Group] = []
+                for entry in conn.entries:
+                    if "cn" not in entry.entry_attributes:
+                        continue
+                    members = 0
+                    if "member" in entry.entry_attributes:
+                        try:
+                            members = len(entry.member.values)
+                        except Exception:  # unreadable/absent member values
+                            members = 0
+                    groups.append(Group(name=str(entry.cn.value), members=members))
+                groups.sort(key=lambda g: (-g.members, g.name))
+                return groups
         except LDAPException as err:
             raise LdapServiceError(f"group listing failed: {err}") from err

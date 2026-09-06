@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from app.config import Config
-from app.ldap_service import LdapServiceError, UserAlreadyExistsError
+from app.ldap_service import Group, LdapServiceError, UserAlreadyExistsError
 
 SECRET = "x" * 40  # meets the minimum length check; test-only
 
@@ -24,7 +24,7 @@ class FakeLdap:
         self.group_adds: list[tuple[str, list[str]]] = []
 
     def list_groups(self):
-        return sorted(self.available_groups)
+        return [Group(name, 0) for name in sorted(self.available_groups)]
 
     def user_exists(self, username):
         return username in self.existing_users

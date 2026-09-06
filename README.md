@@ -86,7 +86,7 @@ limiting and lockouts keyed on the real client address.
 
 | Command | Effect |
 |---|---|
-| `/gen [group1,group2]` | Create a registration code. Without arguments opens a paginated group picker with checkboxes. The reply contains the full, copyable link. |
+| `/gen [group1,group2]` | Create a registration code. Without arguments opens a paginated group picker (ordered by membership count, most-used first, with the count shown per group). The reply contains the full, copyable link. |
 | `/list` | Active (unused, unexpired) codes with hint, groups and expiry. |
 | `/revoke <code>` | Invalidate a code immediately. |
 | `/start`, `/help` | Usage text. |

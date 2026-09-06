@@ -16,9 +16,14 @@ def make_state(n=20, preselected=()):
     return PickerState.create([f"g{i:02d}" for i in range(n)], list(preselected))
 
 
-def test_create_sorts_and_dedupes():
-    state = PickerState.create(["zeta", "alpha", "zeta"])
-    assert state.groups == ["alpha", "zeta"]
+def test_create_preserves_server_order_and_dedupes():
+    state = PickerState.create([("zeta", 9), ("alpha", 1), ("zeta", 9)])
+    assert state.groups == [("zeta", 9), ("alpha", 1)]
+
+
+def test_plain_names_default_to_zero_members():
+    state = PickerState.create(["b", "a"])
+    assert state.groups == [("b", 0), ("a", 0)]
 
 
 def test_preselected_filtered_to_available():
@@ -37,9 +42,9 @@ class TestPaging:
 
     def test_page_groups_slice(self):
         state = make_state(20)
-        assert [name for _, name in state.page_groups()] == [f"g{i:02d}" for i in range(8)]
+        assert [name for _, name, _ in state.page_groups()] == [f"g{i:02d}" for i in range(8)]
         state.page_by(1)
-        assert [name for _, name in state.page_groups()] == [f"g{i:02d}" for i in range(8, 16)]
+        assert [name for _, name, _ in state.page_groups()] == [f"g{i:02d}" for i in range(8, 16)]
 
     def test_page_wraps(self):
         state = make_state(10)  # 2 pages
@@ -88,6 +93,12 @@ class TestKeyboard:
         kb = build_keyboard(state)
         assert kb.inline_keyboard[0][0].text.startswith("✅")
         assert kb.inline_keyboard[1][0].text.startswith("⬜")
+
+    def test_buttons_show_member_counts(self):
+        state = PickerState.create([("family", 12), ("admin", 1)])
+        kb = build_keyboard(state)
+        assert kb.inline_keyboard[0][0].text.endswith("family · 12")
+        assert kb.inline_keyboard[1][0].text.endswith("admin · 1")
 
     def test_no_nav_row_when_one_page(self):
         kb = build_keyboard(make_state(3))

@@ -12,8 +12,10 @@ NOT_ADMIN = 999
 
 
 class FakeBackend:
-    def __init__(self, groups=("family", "media", "admin")):
-        self.groups = list(groups)
+    def __init__(self, groups=(("admin", 1), ("family", 4), ("media", 2))):
+        self.groups = [
+            {"name": name, "members": members} for name, members in groups
+        ]
         self.created = []
         self.revoked = []
 
@@ -121,7 +123,7 @@ class TestPickerCallback:
         context = make_context(backend)
         # open picker
         run(handlers.cmd_gen(FakeUpdate(user_id=ADMIN, text="/gen"), context))
-        # select 'family' (index 0 of sorted [admin, family, media])
+        # select 'family' (second group in the server's member-count order)
         run(handlers.on_picker_callback(FakeUpdate(user_id=ADMIN, callback_data="g:1"), context))
         # confirm
         update = FakeUpdate(user_id=ADMIN, callback_data="ok")

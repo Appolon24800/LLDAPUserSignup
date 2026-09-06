@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tests.conftest import SECRET
+from tests.conftest import SECRET, Group
 
 AUTH = {"X-Internal-API-Key": SECRET}
 
@@ -137,7 +137,9 @@ def test_revoke_code(client, fake_ldap):
 
 
 def test_groups_endpoint(client, fake_ldap):
-    fake_ldap.list_groups = lambda: ["admin", "family"]
+    fake_ldap.list_groups = lambda: [Group("family", 4), Group("admin", 1)]
     res = client.get("/internal/groups", headers=AUTH)
     assert res.status_code == 200
-    assert res.get_json() == {"groups": ["admin", "family"]}
+    assert res.get_json() == {
+        "groups": [{"name": "family", "members": 4}, {"name": "admin", "members": 1}]
+    }

@@ -1,9 +1,10 @@
 """Group multi-select picker: pure state machine + inline keyboard builder.
 
 Telegram does not support argument autocomplete for custom commands, so
-``/gen`` uses a paginated inline keyboard with checkboxes. Callback data is
-kept tiny (Telegram caps it at 64 bytes): ``g:<idx>``, ``pg:<+|->``, ``ok``,
-``cx``.
+``/gen`` uses a paginated inline keyboard with checkboxes. The group list
+arrives from the backend already ordered (most members first) and its order
+is preserved: popular groups land on page one. Callback data is kept tiny
+(Telegram caps it at 64 bytes): ``g:<idx>``, ``pg:<+|->``, ``ok``, ``cx``.
 """
 
 from __future__ import annotations
@@ -20,30 +21,39 @@ _CB_PAGE_RE = re.compile(r"^pg:([+-])$")
 _CB_CONFIRM = "ok"
 _CB_CANCEL = "cx"
 
+# A group from the backend: (name, member count). Bare names are accepted
+# and treated as zero members, so plain-list callers keep working.
+GroupEntry = "tuple[str, int] | str"
+
 
 @dataclass
 class PickerState:
-    groups: list[str]
+    groups: list[tuple[str, int]]
     selected: set[str] = field(default_factory=set)
     page: int = 0
 
     @classmethod
     def create(
-        cls, groups: list[str], preselected: list[str] | None = None
+        cls, groups: list[GroupEntry], preselected: list[str] | None = None
     ) -> PickerState:
-        return cls(
-            groups=sorted(set(groups)),
-            selected={g for g in (preselected or []) if g in set(groups)},
-        )
+        ordered: list[tuple[str, int]] = []
+        seen: set[str] = set()
+        for group in groups:
+            name, members = group if isinstance(group, tuple) else (group, 0)
+            if name in seen:
+                continue
+            seen.add(name)
+            ordered.append((name, members))
+        return cls(groups=ordered, selected={g for g in (preselected or []) if g in seen})
 
     @property
     def total_pages(self) -> int:
         return max(1, -(-len(self.groups) // PAGE_SIZE))
 
-    def page_groups(self) -> list[tuple[int, str]]:
+    def page_groups(self) -> list[tuple[int, str, int]]:
         start = self.page * PAGE_SIZE
         chunk = self.groups[start : start + PAGE_SIZE]
-        return [(start + offset, name) for offset, name in enumerate(chunk)]
+        return [(start + offset, name, members) for offset, (name, members) in enumerate(chunk)]
 
     def page_by(self, delta: int) -> None:
         self.page = (self.page + delta) % self.total_pages
@@ -54,7 +64,7 @@ class PickerState:
     def toggle(self, index: int) -> bool:
         if not 0 <= index < len(self.groups):
             return False
-        name = self.groups[index]
+        name = self.groups[index][0]
         if name in self.selected:
             self.selected.discard(name)
         else:
@@ -76,11 +86,11 @@ def build_keyboard(state: PickerState) -> InlineKeyboardMarkup:
     rows = [
         [
             InlineKeyboardButton(
-                text=f"{'✅' if name in state.selected else '⬜'} {name}",
+                text=f"{'✅' if name in state.selected else '⬜'} {name} · {members}",
                 callback_data=f"g:{index}",
             )
         ]
-        for index, name in state.page_groups()
+        for index, name, members in state.page_groups()
     ]
     nav = []
     if state.total_pages > 1:

@@ -67,5 +67,6 @@ class BackendClient:
             "revoked", False
         )
 
-    async def list_groups(self) -> list[str]:
+    async def list_groups(self) -> list[dict]:
+        """[{name, members}] ordered most-members-first (server-side order)."""
         return (await self._request("GET", "/internal/groups")).get("groups", [])

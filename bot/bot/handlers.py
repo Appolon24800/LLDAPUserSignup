@@ -67,7 +67,9 @@ async def cmd_gen(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.effective_message.reply_text("⚠️ No groups found in LLDAP.")
         return
 
-    unknown = [g for g in args if g not in set(available)]
+    # Backend order is most-members-first; the picker keeps it.
+    names = [g["name"] for g in available]
+    unknown = [g for g in args if g not in set(names)]
     if unknown:
         await update.effective_message.reply_text(
             "⚠️ Unknown groups: " + ", ".join(unknown)
@@ -75,7 +77,9 @@ async def cmd_gen(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         args = []
 
-    state = PickerState.create(available, preselected=args or None)
+    state = PickerState.create(
+        [(g["name"], g.get("members", 0)) for g in available], preselected=args or None
+    )
     context.user_data["picker"] = state
     await update.effective_message.reply_text(
         picker_text(state), reply_markup=build_keyboard(state)

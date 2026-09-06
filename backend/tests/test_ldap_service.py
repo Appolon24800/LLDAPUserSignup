@@ -128,9 +128,38 @@ def test_add_to_groups():
         assert f"uid=dave,ou=people,{BASE}" in [str(m) for m in members]
 
 
-def test_list_groups_sorted_unique():
-    svc = make_service(seeded_groups=("media", "family", "admin"))
-    assert svc.list_groups() == ["admin", "family", "media"]
+def test_list_groups_ordered_by_member_count():
+    people = f"ou=people,{BASE}"
+
+    def members(*uids):
+        return [f"uid={u},{people}" for u in uids]
+
+    svc = make_service()
+    with svc._connection_factory() as conn:
+        conn.strategy.add_entry(
+            f"cn=lonely,ou=groups,{BASE}",
+            {"objectClass": ["groupOfNames"], "cn": "lonely", "member": members("a")},
+        )
+        conn.strategy.add_entry(
+            f"cn=big,ou=groups,{BASE}",
+            {"objectClass": ["groupOfNames"], "cn": "big", "member": members("a", "b", "c")},
+        )
+        conn.strategy.add_entry(
+            f"cn=empty,ou=groups,{BASE}",
+            {"objectClass": ["groupOfNames"], "cn": "empty", "member": []},
+        )
+        conn.strategy.add_entry(
+            f"cn=also-big,ou=groups,{BASE}",
+            {"objectClass": ["groupOfNames"], "cn": "also-big", "member": members("a", "b", "c")},
+        )
+
+    groups = svc.list_groups()
+    assert [(g.name, g.members) for g in groups] == [
+        ("also-big", 3),
+        ("big", 3),
+        ("lonely", 1),
+        ("empty", 0),
+    ]
 
 
 def test_dn_helpers():

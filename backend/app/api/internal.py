@@ -99,7 +99,7 @@ def create_code():
     # The groups must exist in LLDAP right now: the account would otherwise
     # be created but left out of its intended groups.
     try:
-        available = set(_ldap().list_groups())
+        available = {g.name for g in _ldap().list_groups()}
     except LdapServiceError:
         raise ApiError(ErrorCode.LDAP_ERROR, "The directory is unavailable", 502) from None
     unknown = [g for g in groups if g not in available]
@@ -171,7 +171,9 @@ def revoke_code():
 @limiter.limit("60 per minute")
 @internal_auth
 def list_groups():
+    """Group names with member counts, most-populated first (for the bot picker)."""
     try:
-        return jsonify({"groups": _ldap().list_groups()})
+        groups = _ldap().list_groups()
     except LdapServiceError:
         raise ApiError(ErrorCode.LDAP_ERROR, "The directory is unavailable", 502) from None
+    return jsonify({"groups": [{"name": g.name, "members": g.members} for g in groups]})
