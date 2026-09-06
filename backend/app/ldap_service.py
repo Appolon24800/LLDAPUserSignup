@@ -136,6 +136,8 @@ class LdapService:
                 conn.unbind()
         except LDAPBindError as err:
             raise LdapConnectionError(f"LDAP bind failed: {err}") from err
+        except LDAPNoSuchObjectResult:
+            raise  # a legitimate "entry absent" answer, not a failure
         except LDAPException as err:
             raise LdapConnectionError(f"LDAP connection failed: {err}") from err
 

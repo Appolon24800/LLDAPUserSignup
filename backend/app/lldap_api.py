@@ -6,6 +6,11 @@ new user to the invite's groups goes through the GraphQL API instead:
 login with the admin credentials, resolve the group's numeric id, then
 addUserToGroup. Standard library only; failures raise LdapServiceError so
 the registration flow treats them like any other directory failure.
+
+Schema notes (lldap schema.graphql): `groups: [Group!]!` takes no filters,
+so group ids are resolved by listing groups and matching displayName;
+`addUserToGroup(userId: String!, groupId: Int!): Success` with
+`Success { ok }`.
 """
 
 from __future__ import annotations
@@ -14,7 +19,9 @@ import base64
 import json
 import logging
 import time
+import urllib.error
 import urllib.request
+from contextlib import suppress
 
 from .ldap_service import LdapServiceError
 
@@ -25,10 +32,11 @@ TIMEOUT_SECONDS = 10
 _LOGIN = "/auth/simple/login"
 _GRAPHQL = "/api/graphql"
 
-_GROUP_ID_QUERY = """
-query GroupId($name: String!) {
-  groups(filters: {name: {eq: $name}}) {
+_GROUPS_QUERY = """
+query Groups {
+  groups {
     id
+    displayName
   }
 }
 """
@@ -36,7 +44,7 @@ query GroupId($name: String!) {
 _ADD_MEMBER_MUTATION = """
 mutation AddMember($user: String!, $group: Int!) {
   addUserToGroup(userId: $user, groupId: $group) {
-    success
+    ok
   }
 }
 """
@@ -65,17 +73,17 @@ class LldapGraphQL:
     def add_user_to_group(self, user_id: str, group_name: str) -> None:
         group_id = self._group_id(group_name)
         result = self._gql(_ADD_MEMBER_MUTATION, {"user": user_id, "group": group_id})
-        if not result.get("addUserToGroup", {}).get("success", False):
+        if not result.get("addUserToGroup", {}).get("ok", False):
             raise LdapServiceError(f"adding {user_id!r} to group {group_name!r} failed")
 
     # -- internals ----------------------------------------------------------------
 
     def _group_id(self, name: str) -> int:
-        result = self._gql(_GROUP_ID_QUERY, {"name": name})
-        groups = result.get("groups") or []
-        if not groups:
-            raise LdapServiceError(f"group {name!r} not found")
-        return int(groups[0]["id"])
+        result = self._gql(_GROUPS_QUERY, {})
+        for group in result.get("groups") or []:
+            if group.get("displayName") == name:
+                return int(group["id"])
+        raise LdapServiceError(f"group {name!r} not found")
 
     def _gql(self, query: str, variables: dict) -> dict:
         token = self._get_token()
@@ -121,6 +129,11 @@ class LldapGraphQL:
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:  # noqa: S310
                 return json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as err:
+            detail = ""
+            with suppress(Exception):
+                detail = err.read().decode("utf-8", "replace")[:200]
+            raise LdapServiceError(f"LLDAP API HTTP {err.code}: {detail}") from err
         except Exception as err:
             logger.warning("LLDAP API request to %s failed: %s", url, err)
             raise LdapServiceError(f"LLDAP API unreachable: {err}") from err

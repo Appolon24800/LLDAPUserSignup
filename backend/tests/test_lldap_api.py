@@ -35,15 +35,19 @@ class Router:
             if not headers.get("Authorization", "").startswith("Bearer "):
                 raise OSError("missing bearer token")
             query = payload["query"]
-            if "GroupId" in query:
-                name = payload["variables"]["name"]
-                if name == "missing":
-                    return {"data": {"groups": []}}
-                return {"data": {"groups": [{"id": 42}]}}
+            if "Groups" in query:
+                return {
+                    "data": {
+                        "groups": [
+                            {"id": 42, "displayName": "family"},
+                            {"id": 7, "displayName": "media"},
+                        ]
+                    }
+                }
             if "AddMember" in query:
-                if payload["variables"] == {"user": "dave", "group": 42}:
-                    return {"data": {"addUserToGroup": {"success": True}}}
-                return {"data": {"addUserToGroup": {"success": False}}}
+                if payload["variables"]["user"] == "dave":
+                    return {"data": {"addUserToGroup": {"ok": True}}}
+                return {"data": {"addUserToGroup": {"ok": False}}}
         raise OSError(f"unexpected url {url}")
 
 
@@ -60,8 +64,10 @@ class TestHappyPath:
         assert [url.rsplit("/", 1)[-1] for url, _, _ in router.calls] == [
             "login", "graphql", "graphql"
         ]
-        group_query = router.calls[1][1]
-        assert group_query["variables"] == {"name": "family"}
+        # Group ids resolve by listing groups (the schema has no filters)
+        # and matching displayName.
+        groups_query = router.calls[1][1]
+        assert groups_query["variables"] == {}
         add_mutation = router.calls[2][1]
         assert add_mutation["variables"] == {"user": "dave", "group": 42}
 
