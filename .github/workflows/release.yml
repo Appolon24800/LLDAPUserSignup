@@ -67,6 +67,7 @@ jobs:
         env:
           LLDAP_LDAP_USER: admin
           LLDAP_LDAP_USER_PASS: integration-test-password
+          LLDAP_JWT_SECRET: ci-only-value-not-a-secret-0123456789abcdef
           LLDAP_LDAP_BASE_DN: dc=example,dc=com
         ports:
           - 3890:3890
