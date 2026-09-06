@@ -17,7 +17,7 @@ import ssl
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import Protocol
 from urllib.parse import urlparse
 
 from ldap3 import NO_ATTRIBUTES, NONE, Connection, Server, Tls
@@ -33,8 +33,16 @@ RECEIVE_TIMEOUT_SECONDS = 15
 
 logger = logging.getLogger(__name__)
 
-if TYPE_CHECKING:  # avoids a circular runtime import (lldap_api uses our errors)
-    from .lldap_api import LldapGraphQL
+
+def _is_duplicate_user_error(err: BaseException) -> bool:
+    text = str(err).lower()
+    return "alreadyexists" in text or "unique constraint failed: users.user_id" in text
+
+
+class GroupAssigner(Protocol):
+    """Anything that can add a user to a group (see app.lldap_api)."""
+
+    def add_user_to_group(self, user_id: str, group_name: str) -> None: ...
 
 
 class LdapServiceError(Exception):
@@ -76,7 +84,7 @@ class LdapService:
         allow_insecure: bool = False,
         connection_factory: ConnectionFactory | None = None,
         ca_cert: str = "",
-        graphql: LldapGraphQL | None = None,
+        graphql: GroupAssigner | None = None,
     ) -> None:
         self.url = url
         self.admin_dn = admin_dn
@@ -195,8 +203,16 @@ class LdapService:
                     raise LdapServiceError(
                         f"user creation failed: {conn.result.get('description', 'unknown')}"
                     )
+        except LdapServiceError as err:
+            # LLDAP answers duplicates with operationsError wrapping SQLite's
+            # "UNIQUE constraint failed: users.user_id", not entryAlreadyExists.
+            if _is_duplicate_user_error(err):
+                raise UserAlreadyExistsError(username) from err
+            if isinstance(err, UserAlreadyExistsError):
+                raise
+            raise LdapServiceError(f"user creation failed: {err}") from err
         except LDAPException as err:
-            if "alreadyexists" in str(err).lower():
+            if _is_duplicate_user_error(err):
                 raise UserAlreadyExistsError(username) from err
             raise LdapServiceError(f"user creation failed: {err}") from err
 
