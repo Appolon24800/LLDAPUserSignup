@@ -2,7 +2,6 @@ import { ArrowLeft, ArrowRight, UserRoundPlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiError, register, validateCode } from "./api";
-import LanguageSwitcher from "./components/LanguageSwitcher";
 import ProgressDots from "./components/ProgressDots";
 import {
   CheckingScreen,
@@ -122,12 +121,6 @@ export default function App() {
 
   return (
     <div className="shell">
-      {phase.name !== "success" && (
-        <div className="top-bar">
-          <LanguageSwitcher />
-        </div>
-      )}
-
       {phase.name === "checking-code" && <CheckingScreen />}
       {phase.name === "code-error" && <CodeErrorScreen errorCode={phase.errorCode} />}
       {phase.name === "submitting" && <CheckingScreen />}

@@ -3,11 +3,6 @@
     "title": "Créez votre compte",
     "subtitle": "Quelques étapes et c'est terminé"
   },
-  "language": {
-    "label": "Langue",
-    "en": "English",
-    "fr": "Français"
-  },
   "steps": {
     "code": "Invitation",
     "identity": "Vos informations",

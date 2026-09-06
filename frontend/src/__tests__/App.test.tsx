@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
@@ -164,16 +164,22 @@ describe("wizard flow", () => {
 });
 
 describe("i18n", () => {
-  it("renders in English by default and switches to French", async () => {
+  it("renders English by default and French when the language changes", async () => {
     setUrl("/register?code=good");
     mockedValidate.mockResolvedValue({ valid: true });
     render(<App />);
     expect(await screen.findByText("Create your account")).toBeInTheDocument();
+    // No manual switcher: language follows the browser (detector config).
+    expect(screen.queryByRole("button", { name: "FR" })).toBeNull();
 
-    await userEvent.click(screen.getByRole("button", { name: "FR" }));
+    const i18n = (await import("../i18n")).default;
+    await act(async () => {
+      await i18n.changeLanguage("fr");
+    });
     expect(await screen.findByText("Créez votre compte")).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "EN" }));
+    await act(async () => {
+      await i18n.changeLanguage("en");
+    });
     expect(await screen.findByText("Create your account")).toBeInTheDocument();
   });
 });

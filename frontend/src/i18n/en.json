@@ -3,11 +3,6 @@
     "title": "Create your account",
     "subtitle": "A few steps and you're done"
   },
-  "language": {
-    "label": "Language",
-    "en": "English",
-    "fr": "Français"
-  },
   "steps": {
     "code": "Invitation",
     "identity": "Your details",

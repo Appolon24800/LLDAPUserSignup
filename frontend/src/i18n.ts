@@ -8,6 +8,7 @@ import fr from "./i18n/fr.json";
 export const SUPPORTED_LANGUAGES = ["en", "fr"] as const;
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 
+// No manual switcher: the UI always follows the browser language.
 void i18n.use(LanguageDetector).use(initReactI18next).init({
   resources: {
     en: { translation: en },
@@ -17,9 +18,8 @@ void i18n.use(LanguageDetector).use(initReactI18next).init({
   fallbackLng: "en",
   interpolation: { escapeValue: false }, // React already escapes
   detection: {
-    order: ["localStorage", "navigator"],
-    lookupLocalStorage: "signupLang",
-    caches: ["localStorage"],
+    order: ["navigator"],
+    caches: [],
   },
 });
 
