@@ -19,6 +19,10 @@ from .db import connect
 
 CODE_TOKEN_BYTES = 32  # 256-bit token -> ~43 url-safe characters
 
+# Sentinel for codes with no time limit (CODE_EXPIRY_MINUTES=0): far-future
+# ISO timestamp so lexicographic comparisons in SQL keep working.
+NEVER_EXPIRES = datetime(9999, 12, 31, tzinfo=UTC)
+
 
 def hash_code(code: str) -> str:
     return hashlib.sha256(code.encode("utf-8")).hexdigest()
@@ -49,6 +53,10 @@ class CodeRecord:
     revoked_at: datetime | None = None
     failed_attempts: int = 0
     last_failed_at: datetime | None = None
+
+    @property
+    def never_expires(self) -> bool:
+        return self.expires_at.year >= 9000
 
 
 class CodeClaimError(Exception):
@@ -87,7 +95,11 @@ class CodeStore:
         """Generate, persist and return a fresh single-use code token."""
         token = secrets.token_urlsafe(CODE_TOKEN_BYTES)
         now = _now()
-        expires = now + timedelta(minutes=self.expiry_minutes)
+        expires = (
+            NEVER_EXPIRES
+            if self.expiry_minutes == 0
+            else now + timedelta(minutes=self.expiry_minutes)
+        )
         with connect(self.db_path) as conn:
             conn.execute(
                 "INSERT INTO registration_codes "

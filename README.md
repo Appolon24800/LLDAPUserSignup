@@ -104,9 +104,9 @@ are fire-and-forget — a Telegram outage never affects signups.
 ## Security model
 
 - **Codes**: 256-bit `secrets.token_urlsafe` values; only their SHA-256 hash is
-  stored. Single-use with an atomic claim (no double-use race), short expiry
-  (`CODE_EXPIRY_MINUTES`, default 60), immediate invalidation on use, revoke,
-  or `MAX_FAILED_ATTEMPTS` failed submissions.
+  stored. Single-use with an atomic claim (no double-use race), optionally
+  time-limited (`CODE_EXPIRY_MINUTES`, default 0 = no expiry), invalidated
+  immediately on use, revoke, or `MAX_FAILED_ATTEMPTS` failed submissions.
 - **Brute force**: per-IP exponential lockout shared across workers
   (SQLite-backed: 3 consecutive failures → 30 s, doubling, capped at 1 h), on
   top of Flask-Limiter request throttling (`RATE_LIMIT_VALIDATE`,

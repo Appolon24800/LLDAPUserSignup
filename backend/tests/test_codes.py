@@ -43,6 +43,18 @@ def test_raw_code_not_stored(store, code):
         assert code.encode() not in fh.read()
 
 
+def test_no_expiry_codes_never_expire(tmp_path):
+    path = str(tmp_path / "codes.db")
+    init_db(path)
+    store = CodeStore(path, max_failed_attempts=3, expiry_minutes=0)
+    code = store.create(("family",), created_by="x")
+    record = store.get(code)
+    assert record.never_expires is True
+    assert store.status(code) == "valid"
+    assert store.claim(code, used_by="alice").used_by == "alice"
+    assert store.list_active() == []  # claimed -> inactive
+
+
 def test_tokens_are_unique(store):
     tokens = {store.create((), created_by="x") for _ in range(50)}
     assert len(tokens) == 50

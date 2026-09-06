@@ -100,6 +100,23 @@ def test_list_codes_shape(client, fake_ldap, config):
     assert all("code" not in c for c in codes)  # never returns raw codes
 
 
+def test_create_code_without_expiry_reports_null(tmp_path):
+    from app import create_app
+    from tests.conftest import FakeLdap, make_config
+
+    app = create_app(make_config(tmp_path, code_expiry_minutes=0))
+    app.extensions["ldap_service"] = FakeLdap(available_groups=["family"])
+
+    res = app.test_client().post(
+        "/internal/codes", headers=AUTH, json={"groups": ["family"], "created_by": "1"}
+    )
+    assert res.status_code == 201
+    assert res.get_json()["expires_at"] is None
+
+    listed = app.test_client().get("/internal/codes", headers=AUTH).get_json()["codes"]
+    assert listed[0]["expires_at"] is None
+
+
 def test_revoke_code(client, fake_ldap):
     fake_ldap.available_groups = ["family"]
     code = client.post(

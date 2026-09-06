@@ -151,7 +151,7 @@ class Config:
             internal_api_key=_secret(env, "INTERNAL_API_KEY"),
             flask_secret_key=_secret(env, "FLASK_SECRET_KEY"),
             cors_allowed_origins=origins,
-            code_expiry_minutes=_int_in_range(env, "CODE_EXPIRY_MINUTES", 60, 1, 10080),
+            code_expiry_minutes=_int_in_range(env, "CODE_EXPIRY_MINUTES", 0, 0, 525600),
             max_failed_attempts=_int_in_range(env, "MAX_FAILED_ATTEMPTS", 5, 1, 100),
             rate_limit_validate=_rate_limit(env, "RATE_LIMIT_VALIDATE", "20 per minute"),
             rate_limit_submit=_rate_limit(env, "RATE_LIMIT_SUBMIT", "5 per minute"),

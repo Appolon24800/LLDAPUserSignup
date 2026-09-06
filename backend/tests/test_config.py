@@ -22,7 +22,7 @@ ENV = {
 def test_from_env_minimal():
     cfg = Config.from_env(ENV)
     assert cfg.base_url == "https://signup.example.com"
-    assert cfg.code_expiry_minutes == 60
+    assert cfg.code_expiry_minutes == 0  # no expiry by default
     assert cfg.max_failed_attempts == 5
     assert cfg.rate_limit_validate == "20 per minute"
     assert cfg.rate_limit_submit == "5 per minute"

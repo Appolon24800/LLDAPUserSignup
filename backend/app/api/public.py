@@ -101,10 +101,11 @@ def validate_code():
 
     _lockout().reset(request.remote_addr or "unknown")
     record = _store().get(code)
+    expires = None if record.never_expires else record.expires_at.isoformat()
     return jsonify(
         {
             "valid": True,
-            "expires_at": record.expires_at.isoformat(),
+            "expires_at": expires,
             "platform_name": _cfg().platform_name,
         }
     )

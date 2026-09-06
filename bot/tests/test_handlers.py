@@ -178,6 +178,23 @@ class TestList:
         assert "TOK…" in reply
         assert "family" in reply
 
+    def test_shows_no_expiry_when_expires_at_is_null(self):
+        class NoExpiry(FakeBackend):
+            async def list_codes(self):
+                return [
+                    {
+                        "code_hint": "TOK…",
+                        "groups": ["family"],
+                        "created_by": "111",
+                        "expires_at": None,
+                        "failed_attempts": 0,
+                    }
+                ]
+
+        update = FakeUpdate(user_id=ADMIN, text="/list")
+        run(handlers.cmd_list(update, make_context(backend=NoExpiry())))
+        assert "no expiry" in update.effective_message.last_reply
+
     def test_empty(self):
         class Empty(FakeBackend):
             async def list_codes(self):
@@ -230,4 +247,16 @@ class TestRelativeExpiry:
         past = handlers._relative_expiry((now - timedelta(minutes=5)).isoformat())
         assert past == "less than a minute"
         assert handlers._relative_expiry("") == ""
+        assert handlers._relative_expiry(None) == ""
         assert handlers._relative_expiry("garbage") == ""
+
+    def test_code_message_omits_expiry_when_none(self):
+        message = handlers._code_message(
+            {
+                "code": "T",
+                "url": "https://x/register?code=T",
+                "groups": ["family"],
+                "expires_at": None,
+            }
+        )
+        assert "Expires" not in message

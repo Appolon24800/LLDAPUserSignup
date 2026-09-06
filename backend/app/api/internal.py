@@ -50,6 +50,10 @@ def _require_json() -> dict:
     return body
 
 
+def _expires_iso(record) -> str | None:
+    return None if record.never_expires else record.expires_at.isoformat()
+
+
 @blp.post("/codes")
 @limiter.limit("60 per minute")
 @internal_auth
@@ -116,7 +120,7 @@ def create_code():
                 "code": token,
                 "url": f"{cfg.base_url}/register?code={token}",
                 "groups": list(record.groups),
-                "expires_at": record.expires_at.isoformat(),
+                "expires_at": _expires_iso(record),
             }
         ),
         201,
@@ -137,7 +141,7 @@ def list_codes():
                     "groups": list(r.groups),
                     "created_by": r.created_by,
                     "created_at": r.created_at.isoformat(),
-                    "expires_at": r.expires_at.isoformat(),
+                    "expires_at": _expires_iso(r),
                     "failed_attempts": r.failed_attempts,
                 }
                 for r in records

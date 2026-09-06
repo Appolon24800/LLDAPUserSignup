@@ -142,7 +142,7 @@ def _code_message(result: dict) -> str:
     return "\n".join(lines)
 
 
-def _relative_expiry(iso: str) -> str:
+def _relative_expiry(iso: str | None) -> str:
     if not iso:
         return ""
     try:
@@ -171,9 +171,10 @@ async def cmd_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lines = ["Active registration codes:", ""]
     for c in codes:
         groups = ", ".join(c.get("groups", []))
-        expires = _relative_expiry(c.get("expires_at", ""))
+        expires = _relative_expiry(c.get("expires_at"))
+        expiry_text = f"expires {expires}" if expires else "no expiry"
         failed = c.get("failed_attempts", 0)
-        lines.append(f"• `{c['code_hint']}` — {groups} (expires {expires}, {failed} failed)")
+        lines.append(f"• `{c['code_hint']}` — {groups} ({expiry_text}, {failed} failed)")
     await update.effective_message.reply_text("\n".join(lines))
 
 
