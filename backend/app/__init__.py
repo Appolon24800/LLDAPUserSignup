@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from flask import Flask, request
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -17,6 +19,12 @@ from .lockout import IpLockout
 
 def create_app(config: Config | None = None) -> Flask:
     cfg = config if config is not None else Config.from_env()
+
+    if not logging.getLogger().handlers:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        )
 
     app = Flask(__name__)
     app.config.update(
@@ -64,6 +72,20 @@ def create_app(config: Config | None = None) -> Flask:
     app.register_blueprint(health_blp)
     app.register_blueprint(public_blp)
     app.register_blueprint(internal_blp)
+
+    # Boot banner: one line that proves the app started and shows what it
+    # will talk to (no secrets) — invaluable in `docker compose logs`.
+    app.logger.info(
+        "backend ready: base_url=%s ldap=%s allow_insecure=%s db=%s platform=%r "
+        "code_expiry_minutes=%s max_upload_mb=%s",
+        cfg.base_url,
+        cfg.ldap_url,
+        cfg.ldap_allow_insecure,
+        cfg.database_path,
+        cfg.platform_name,
+        cfg.code_expiry_minutes,
+        cfg.max_upload_mb,
+    )
 
     _register_error_handlers(app)
     return app
