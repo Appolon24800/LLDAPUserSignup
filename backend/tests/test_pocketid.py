@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from app.pocketid import trigger_ldap_sync
 from tests.conftest import make_config
 
@@ -37,14 +39,21 @@ class TestTriggerLdapSync:
         )
         assert sent == []
 
-    def test_production_sender_swallows_errors(self, monkeypatch):
+    def test_production_sender_swallows_errors(self, monkeypatch, caplog):
         from app import pocketid
 
         def boom(request, timeout=None):
             raise OSError("network down")
 
         monkeypatch.setattr(pocketid.urllib.request, "urlopen", boom)
-        pocketid._send("https://id.example.com", "pid-test-key")  # must not raise
+        with caplog.at_level(logging.WARNING):
+            pocketid._send("https://id.example.com", "pid-test-key")  # must not raise
+        warnings = [
+            rec
+            for rec in caplog.records
+            if rec.levelno == logging.WARNING and "https://id.example.com" in rec.getMessage()
+        ]
+        assert warnings, "expected a warning mentioning the PocketID URL"
 
     def test_production_sender_posts_sync_endpoint(self, monkeypatch):
         from app import pocketid
@@ -62,9 +71,15 @@ class TestTriggerLdapSync:
                 return b""
 
         def fake_urlopen(request, timeout=None):
-            # urllib capitalizes header names: "X-API-Key" -> "X-api-key".
+            # urllib's capitalize() lowercases the rest: "X-API-Key" is
+            # stored as "X-api-key".
             calls.append(
-                (request.full_url, request.get_method(), request.headers.get("X-api-key"))
+                (
+                    request.full_url,
+                    request.get_method(),
+                    request.headers.get("X-api-key"),
+                    timeout,
+                )
             )
             return FakeResponse()
 
@@ -75,5 +90,6 @@ class TestTriggerLdapSync:
                 "https://id.example.com/api/application-configuration/sync-ldap",
                 "POST",
                 "pid-test-key",
+                pocketid.TIMEOUT_SECONDS,
             )
         ]

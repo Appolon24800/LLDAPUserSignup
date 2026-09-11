@@ -50,12 +50,12 @@ def _executor_submit(func, *args) -> None:
 
 
 def _send(url: str, api_key: str) -> None:
-    request = urllib.request.Request(  # noqa: S310 - operator-configured URL
-        f"{url}{SYNC_PATH}",
-        headers={"X-API-Key": api_key},
-        method="POST",
-    )
     try:
+        request = urllib.request.Request(  # noqa: S310 - operator-configured URL
+            f"{url}{SYNC_PATH}",
+            headers={"X-API-Key": api_key},
+            method="POST",
+        )
         with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:  # noqa: S310
             response.read()
     except Exception:  # sync failures are logged, never raised

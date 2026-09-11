@@ -133,7 +133,9 @@ key created in PocketID's admin UI) are set, every successful registration
 also asks PocketID to re-sync its LDAP users, so the new user can log in
 through PocketID within seconds instead of waiting for the hourly scheduled
 sync. The trigger is fire-and-forget — a PocketID outage never affects
-signups, and the hourly sync picks up the user regardless.
+signups, and the hourly sync picks up the user regardless. Setting only one
+of the two variables makes the backend refuse to start (fail-fast on
+misconfiguration).
 
 ## Security model
 

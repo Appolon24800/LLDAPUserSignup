@@ -199,12 +199,21 @@ def test_register_ldap_create_failure_reverts_code(client, fake_ldap, code):
     assert post_json(client, "/api/v1/validate-code", {"code": code}).status_code == 200
 
 
-def test_register_group_failure_deletes_user_and_reverts(client, fake_ldap, code):
+def test_register_group_failure_deletes_user_and_reverts(client, fake_ldap, code, monkeypatch):
+    from app.api import public
+
+    syncs = []
+    monkeypatch.setattr(
+        public,
+        "trigger_ldap_sync",
+        lambda cfg: syncs.append(cfg),
+    )
     fake_ldap.fail_groups = True
     res = register(client, code)
     assert res.status_code == 502
     assert fake_ldap.deleted == ["alice"]  # half-created user removed
     assert post_json(client, "/api/v1/validate-code", {"code": code}).status_code == 200
+    assert syncs == []  # PocketID sync must not fire on failure
 
 
 def test_register_rejects_bad_photo(client, code):
