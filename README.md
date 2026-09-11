@@ -128,6 +128,13 @@ name>` to the admin chats. Set `PLATFORM_NAME` to brand both that message
 and the user-facing success screen ("<Platform> account created"). Sends
 are fire-and-forget — a Telegram outage never affects signups.
 
+**PocketID sync**: when `POCKETID_URL` and `POCKETID_API_KEY` (an admin API
+key created in PocketID's admin UI) are set, every successful registration
+also asks PocketID to re-sync its LDAP users, so the new user can log in
+through PocketID within seconds instead of waiting for the hourly scheduled
+sync. The trigger is fire-and-forget — a PocketID outage never affects
+signups, and the hourly sync picks up the user regardless.
+
 ## Security model
 
 - **Codes**: 256-bit `secrets.token_urlsafe` values; only their SHA-256 hash is

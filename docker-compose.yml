@@ -43,6 +43,9 @@ services:
       REDIRECT_URL: ${REDIRECT_URL:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       TELEGRAM_ADMIN_IDS: ${TELEGRAM_ADMIN_IDS}
+      # Optional: trigger PocketID's LDAP sync after each registration.
+      POCKETID_URL: ${POCKETID_URL:-}
+      POCKETID_API_KEY: ${POCKETID_API_KEY:-}
     volumes:
       - signup-data:/data
     healthcheck:
