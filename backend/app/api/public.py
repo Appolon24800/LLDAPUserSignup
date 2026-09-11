@@ -20,6 +20,7 @@ from ..images import ImageRejected, process_photo
 from ..ldap_service import LdapServiceError, UserAlreadyExistsError
 from ..limiter import limiter
 from ..notifier import notify_account_created
+from ..pocketid import trigger_ldap_sync
 from ..validation import (
     split_full_name,
     validate_email,
@@ -242,6 +243,7 @@ def register():
         ) from err
 
     _lockout().reset(request.remote_addr or "unknown")
+    trigger_ldap_sync(_cfg())
     notify_account_created(_cfg(), display_name=full_name)
     return jsonify({"username": username, "created": True}), 201
 

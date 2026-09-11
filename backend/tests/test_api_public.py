@@ -89,6 +89,12 @@ def test_register_happy_path(client, fake_ldap, code, monkeypatch):
         "notify_account_created",
         lambda cfg, display_name: notifications.append(display_name),
     )
+    syncs = []
+    monkeypatch.setattr(
+        public,
+        "trigger_ldap_sync",
+        lambda cfg: syncs.append(cfg),
+    )
     res = register(client, code)
     assert res.status_code == 201
     assert res.get_json() == {"username": "alice", "created": True}
@@ -99,6 +105,7 @@ def test_register_happy_path(client, fake_ldap, code, monkeypatch):
     assert created["display_name"] == "Alice Smith"
     assert fake_ldap.group_adds == [("alice", ["family"])]
     assert notifications == ["Alice Smith"]  # display name, not username
+    assert len(syncs) == 1  # PocketID sync triggered exactly once, with the app config
     # Code is single-use now.
     assert post_json(client, "/api/v1/validate-code", {"code": code}).status_code == 400
 
