@@ -65,6 +65,30 @@ def test_redirect_url_optional_and_validated():
         Config.from_env(ENV | {"REDIRECT_URL": "ftp://x"})
 
 
+def test_pocketid_optional_and_validated():
+    both = {"POCKETID_URL": "https://id.example.com", "POCKETID_API_KEY": "pid-test-key"}
+    cfg = Config.from_env(ENV | both)
+    assert cfg.pocketid_url == "https://id.example.com"
+    assert cfg.pocketid_api_key == "pid-test-key"
+    # Defaults: feature off, both empty.
+    assert Config.from_env(ENV).pocketid_url == ""
+    assert Config.from_env(ENV).pocketid_api_key == ""
+    # Trailing slash stripped, like BASE_URL.
+    cfg = Config.from_env(ENV | {"POCKETID_URL": "https://id.example.com/",
+                                 "POCKETID_API_KEY": "pid-test-key"})
+    assert cfg.pocketid_url == "https://id.example.com"
+    # Malformed URL.
+    with pytest.raises(ConfigError, match="POCKETID_URL"):
+        Config.from_env(ENV | {"POCKETID_URL": "id.example.com", "POCKETID_API_KEY": "k"})
+    with pytest.raises(ConfigError, match="POCKETID_URL"):
+        Config.from_env(ENV | {"POCKETID_URL": "ftp://id.example.com", "POCKETID_API_KEY": "k"})
+    # Both-or-neither.
+    with pytest.raises(ConfigError, match="must be set together"):
+        Config.from_env(ENV | {"POCKETID_URL": "https://id.example.com"})
+    with pytest.raises(ConfigError, match="must be set together"):
+        Config.from_env(ENV | {"POCKETID_API_KEY": "pid-test-key"})
+
+
 def test_base_url_subpath_is_kept():
     cfg = Config.from_env(ENV | {"BASE_URL": "https://home.appolon.dev/signup/"})
     assert cfg.base_url == "https://home.appolon.dev/signup"

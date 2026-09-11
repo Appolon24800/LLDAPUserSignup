@@ -107,6 +107,12 @@ class Config:
     # every successful registration (same token/IDs as the bot service).
     telegram_bot_token: str = ""
     telegram_admin_ids: frozenset[int] = frozenset()
+    # Optional: when both are set, the backend asks PocketID to re-sync its
+    # LDAP users right after a successful registration (PocketID otherwise
+    # only syncs on startup and hourly). The key is an admin API key created
+    # in PocketID at /settings/admin/api-keys.
+    pocketid_url: str = ""
+    pocketid_api_key: str = ""
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Config:
@@ -172,6 +178,20 @@ class Config:
                     f"REDIRECT_URL must be an absolute http(s) URL, got {redirect_url!r}"
                 )
 
+        pocketid_url = env.get("POCKETID_URL", "").strip().rstrip("/")
+        if pocketid_url:
+            parsed = urlparse(pocketid_url)
+            if parsed.scheme not in ("http", "https") or not parsed.netloc:
+                raise ConfigError(
+                    f"POCKETID_URL must be an absolute http(s) URL, got {pocketid_url!r}"
+                )
+        pocketid_api_key = env.get("POCKETID_API_KEY", "").strip()
+        if bool(pocketid_url) != bool(pocketid_api_key):
+            raise ConfigError(
+                "POCKETID_URL and POCKETID_API_KEY must be set together "
+                "(leave both empty to disable the PocketID sync trigger)"
+            )
+
         raw_notify_ids = env.get("TELEGRAM_ADMIN_IDS", "").strip()
         notify_ids: frozenset[int] = frozenset()
         if raw_notify_ids:
@@ -209,4 +229,6 @@ class Config:
             ldap_ca_cert=ldap_ca_cert,
             lldap_http_url=lldap_http_url,
             lldap_admin_user=env.get("LLDAP_ADMIN_USER", "").strip(),
+            pocketid_url=pocketid_url,
+            pocketid_api_key=pocketid_api_key,
         )
